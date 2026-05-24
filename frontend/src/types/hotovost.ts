@@ -6,6 +6,11 @@ export interface Hotovost {
   kusy500: number
   kusy200: number
   kusy100: number
-  mince: number
+  kusy50: number
+  kusy20: number
+  kusy10: number
+  kusy5: number
+  kusy2: number
+  kusy1: number
   total?: number
 }

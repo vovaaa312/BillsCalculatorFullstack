@@ -111,11 +111,11 @@ public class ReportBuilder {
 
     private static String cashTable(ReportStrings s, Hotovost h) {
         String kc = s.labelKc();
-        String[] labels = {"5000 " + kc, "2000 " + kc, "1000 " + kc, " 500 " + kc, " 200 " + kc, " 100 " + kc, s.rowDrobne()};
+        String[] labels = {"5000 " + kc, "2000 " + kc, "1000 " + kc, " 500 " + kc, " 200 " + kc, " 100 " + kc,
+                           "  50 " + kc, "  20 " + kc, "  10 " + kc, "   5 " + kc, "   2 " + kc, "   1 " + kc};
         int[] nominals = h.getNominals(), counts = h.getCounts();
-        String[] pcArr = new String[7], amArr = new String[7];
-        for (int i = 0; i < 6; i++) { pcArr[i] = String.valueOf(counts[i]); amArr[i] = (nominals[i] * counts[i]) + " " + kc; }
-        pcArr[6] = "-"; amArr[6] = h.getMince() + " " + kc;
+        String[] pcArr = new String[12], amArr = new String[12];
+        for (int i = 0; i < 12; i++) { pcArr[i] = String.valueOf(counts[i]); amArr[i] = (nominals[i] * counts[i]) + " " + kc; }
         int c1 = s.colNominal().length(), c2 = s.colPocet().length(), c3 = s.colCastka().length();
         for (String l : labels) c1 = Math.max(c1, l.length());
         for (String p : pcArr) c2 = Math.max(c2, p.length());
@@ -131,7 +131,7 @@ public class ReportBuilder {
         sb.append(hr).append('\n');
         sb.append(String.format("| %-" + (c1-1) + "s| %" + (c2-1) + "s| %" + (c3-1) + "s|\n", s.colNominal(), s.colPocet(), s.colCastka()));
         sb.append(hr).append('\n');
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < 12; i++)
             sb.append(String.format("| %-" + (c1-1) + "s| %" + (c2-1) + "s| %" + (c3-1) + "s|\n", labels[i], pcArr[i], amArr[i]));
         sb.append(hrJ).append('\n');
         sb.append(String.format("| %-" + (inner - totalVal.length() - 2) + "s%" + totalVal.length() + "s|\n", s.footCelkemHotovosti() + ":", totalVal));

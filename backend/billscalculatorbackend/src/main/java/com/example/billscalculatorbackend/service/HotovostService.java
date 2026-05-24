@@ -30,7 +30,12 @@ public class HotovostService {
         h.setKusy500(incoming.getKusy500());
         h.setKusy200(incoming.getKusy200());
         h.setKusy100(incoming.getKusy100());
-        h.setMince(incoming.getMince());
+        h.setKusy50(incoming.getKusy50());
+        h.setKusy20(incoming.getKusy20());
+        h.setKusy10(incoming.getKusy10());
+        h.setKusy5(incoming.getKusy5());
+        h.setKusy2(incoming.getKusy2());
+        h.setKusy1(incoming.getKusy1());
         return hotovostRepo.save(h);
     }
 }

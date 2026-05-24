@@ -11,3 +11,9 @@ export interface DriverShift {
   totalMinutes?: number
   totalHours?: number
 }
+
+export interface DriverFilter {
+  driverName?: string
+  dateFrom?: string
+  dateTo?: string
+}

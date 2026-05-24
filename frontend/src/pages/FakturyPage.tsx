@@ -20,7 +20,6 @@ const emptyPolozka = (): Polozka => ({
 export default function FakturyPage() {
   const qc = useQueryClient()
   const [filter, setFilter] = useState<FakturaFilter>({})
-  const [showFilter, setShowFilter] = useState(false)
   const [editing, setEditing] = useState<Faktura | null>(null)
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
 
@@ -50,16 +49,18 @@ export default function FakturyPage() {
   if (isLoading) return <div className="p-4">Načítání...</div>
 
   return (
-    <div>
+    <div className="flex gap-4">
+      <div className="w-60 shrink-0">
+        <FilterPanel filter={filter} onChange={setFilter} onClear={() => setFilter({})} />
+      </div>
+
+      <div className="flex-1 min-w-0">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">Faktury</h1>
           <p className="text-sm text-gray-500 mt-1">Celkem: {totalCelkem.toFixed(2)} Kč</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowFilter(v => !v)} className={`px-3 py-2 rounded text-sm border ${showFilter ? 'bg-gray-200' : 'hover:bg-gray-50'}`}>
-            Filtr {Object.values(filter).some(Boolean) ? '●' : ''}
-          </button>
           <label className="cursor-pointer bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700">
             {importMut.isPending ? 'Importuji...' : 'Importovat PDF'}
             <input type="file" accept=".pdf" className="hidden" disabled={importMut.isPending}
@@ -70,10 +71,6 @@ export default function FakturyPage() {
           </button>
         </div>
       </div>
-
-      {showFilter && (
-        <FilterPanel filter={filter} onChange={setFilter} onClear={() => setFilter({})} />
-      )}
 
       <div className="bg-white rounded shadow overflow-auto">
         <table className="w-full text-sm">
@@ -165,14 +162,20 @@ export default function FakturyPage() {
           <FakturaForm initial={editing} onSave={handleSave} onCancel={() => setEditing(null)} />
         </Modal>
       )}
+      </div>
     </div>
   )
 }
 
 function FilterPanel({ filter, onChange, onClear }: { filter: FakturaFilter; onChange: (f: FakturaFilter) => void; onClear: () => void }) {
   const set = (k: keyof FakturaFilter, v: unknown) => onChange({ ...filter, [k]: v || undefined })
+  const hasFilter = Object.values(filter).some(Boolean)
   return (
-    <div className="bg-white rounded shadow p-4 mb-4 grid grid-cols-3 gap-3 text-sm">
+    <div className="bg-white rounded shadow p-4 sticky top-4 space-y-3 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-gray-700">Filtry</span>
+        {hasFilter && <button onClick={onClear} className="text-xs text-gray-400 hover:text-red-500">Zrušit</button>}
+      </div>
       <div>
         <label className="block text-xs text-gray-500 mb-1">Odběratel</label>
         <input value={filter.nazev ?? ''} onChange={e => set('nazev', e.target.value)} placeholder="Hledat..." className="w-full border rounded px-2 py-1" />
@@ -201,18 +204,13 @@ function FilterPanel({ filter, onChange, onClear }: { filter: FakturaFilter; onC
         <label className="block text-xs text-gray-500 mb-1">Datum do</label>
         <input type="date" value={filter.dateTo ?? ''} onChange={e => set('dateTo', e.target.value)} className="w-full border rounded px-2 py-1" />
       </div>
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <label className="block text-xs text-gray-500 mb-1">Částka od</label>
-          <input type="number" value={filter.amountMin ?? ''} onChange={e => set('amountMin', +e.target.value || undefined)} className="w-full border rounded px-2 py-1" />
-        </div>
-        <div className="flex-1">
-          <label className="block text-xs text-gray-500 mb-1">do</label>
-          <input type="number" value={filter.amountMax ?? ''} onChange={e => set('amountMax', +e.target.value || undefined)} className="w-full border rounded px-2 py-1" />
-        </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Částka od (Kč)</label>
+        <input type="number" value={filter.amountMin ?? ''} onChange={e => set('amountMin', +e.target.value || undefined)} className="w-full border rounded px-2 py-1" />
       </div>
-      <div className="col-span-3 flex justify-end">
-        <button onClick={onClear} className="text-sm text-gray-500 hover:text-gray-700 underline">Zrušit filtry</button>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Částka do (Kč)</label>
+        <input type="number" value={filter.amountMax ?? ''} onChange={e => set('amountMax', +e.target.value || undefined)} className="w-full border rounded px-2 py-1" />
       </div>
     </div>
   )

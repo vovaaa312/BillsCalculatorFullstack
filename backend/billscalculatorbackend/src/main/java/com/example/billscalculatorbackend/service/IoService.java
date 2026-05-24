@@ -56,7 +56,12 @@ public class IoService {
             h.setKusy500(data.getHotovost().getKusy500());
             h.setKusy200(data.getHotovost().getKusy200());
             h.setKusy100(data.getHotovost().getKusy100());
-            h.setMince(data.getHotovost().getMince());
+            h.setKusy50(data.getHotovost().getKusy50());
+            h.setKusy20(data.getHotovost().getKusy20());
+            h.setKusy10(data.getHotovost().getKusy10());
+            h.setKusy5(data.getHotovost().getKusy5());
+            h.setKusy2(data.getHotovost().getKusy2());
+            h.setKusy1(data.getHotovost().getKusy1());
             hotovostRepo.save(h);
         }
     }

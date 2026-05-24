@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { geocodeAddress, optimizeRoute } from '../api/routes'
+import { optimizeRoute } from '../api/routes'
 import type { RoutePoint, RouteResult } from '../types/route'
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
@@ -26,33 +26,80 @@ function mapyCzLink(points: RoutePoint[]) {
   return `https://mapy.cz/zakladni?planovani-trasy&routePoints=${coords}`
 }
 
-interface PointEntry { address: string; point: RoutePoint | null; geocoding: boolean }
+function parseGoogleMapsUrl(str: string): RoutePoint | null {
+  try {
+    const atMatch = str.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+    if (atMatch) return { name: `${atMatch[1]}, ${atMatch[2]}`, lat: +atMatch[1], lon: +atMatch[2] }
+    const qMatch = str.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/)
+    if (qMatch) return { name: `${qMatch[1]}, ${qMatch[2]}`, lat: +qMatch[1], lon: +qMatch[2] }
+    const llMatch = str.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/)
+    if (llMatch) return { name: `${llMatch[1]}, ${llMatch[2]}`, lat: +llMatch[1], lon: +llMatch[2] }
+  } catch { /* ignore */ }
+  return null
+}
 
+async function nominatimSearch(query: string): Promise<RoutePoint[]> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=0`,
+    { headers: { 'Accept-Language': 'cs' } }
+  )
+  const data: { display_name: string; lat: string; lon: string }[] = await res.json()
+  return data.map(d => ({ name: d.display_name, lat: +d.lat, lon: +d.lon }))
+}
+
+async function reverseGeocode(lat: number, lon: number): Promise<RoutePoint> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+    { headers: { 'Accept-Language': 'cs' } }
+  )
+  const data: { display_name: string } = await res.json()
+  return { name: data.display_name, lat, lon }
+}
+
+interface PointEntry { address: string; point: RoutePoint | null; geocoding: boolean }
 const emptyEntry = (): PointEntry => ({ address: '', point: null, geocoding: false })
+
+type MapClickTarget = 'start' | number | 'end' | null
+
+function MapClickHandler({ target, onPlace }: { target: MapClickTarget; onPlace: (lat: number, lon: number) => void }) {
+  useMapEvents({
+    click(e) {
+      if (target !== null) onPlace(e.latlng.lat, e.latlng.lng)
+    },
+  })
+  return null
+}
 
 export default function RoutesPage() {
   const [start, setStart] = useState<PointEntry>(emptyEntry())
   const [waypoints, setWaypoints] = useState<PointEntry[]>([emptyEntry()])
   const [end, setEnd] = useState<PointEntry>(emptyEntry())
   const [result, setResult] = useState<RouteResult | null>(null)
+  const [mapClickTarget, setMapClickTarget] = useState<MapClickTarget>(null)
 
-  const geocodeMut = useMutation({ mutationFn: geocodeAddress })
   const optimizeMut = useMutation({ mutationFn: optimizeRoute, onSuccess: setResult })
-
-  const geocodeEntry = async (entry: PointEntry, set: (e: PointEntry) => void) => {
-    if (!entry.address.trim()) return
-    set({ ...entry, geocoding: true })
-    try {
-      const pt = await geocodeMut.mutateAsync(entry.address)
-      set({ ...entry, point: pt, geocoding: false })
-    } catch { set({ ...entry, geocoding: false }) }
-  }
 
   const updateWaypoint = (i: number, e: PointEntry) =>
     setWaypoints(prev => prev.map((w, j) => j === i ? e : w))
-
   const addWaypoint = () => setWaypoints(prev => [...prev, emptyEntry()])
   const removeWaypoint = (i: number) => setWaypoints(prev => prev.filter((_, j) => j !== i))
+
+  const handleMapPlace = useCallback(async (lat: number, lon: number) => {
+    const pt = await reverseGeocode(lat, lon)
+    if (mapClickTarget === 'start') setStart({ address: pt.name, point: pt, geocoding: false })
+    else if (mapClickTarget === 'end') setEnd({ address: pt.name, point: pt, geocoding: false })
+    else if (typeof mapClickTarget === 'number') updateWaypoint(mapClickTarget, { address: pt.name, point: pt, geocoding: false })
+    setMapClickTarget(null)
+  }, [mapClickTarget])
+
+  const handleGps = () => {
+    if (!navigator.geolocation) return
+    setStart(e => ({ ...e, geocoding: true }))
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const pt = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
+      setStart({ address: pt.name, point: pt, geocoding: false })
+    }, () => setStart(e => ({ ...e, geocoding: false })))
+  }
 
   const canOptimize = start.point != null && waypoints.some(w => w.point != null)
 
@@ -71,13 +118,31 @@ export default function RoutesPage() {
 
   const polyline: [number, number][] = result?.orderedPoints.map(p => [p.lat, p.lon]) ?? []
 
+  const mapCursorClass = mapClickTarget !== null ? 'cursor-crosshair' : ''
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Optimalizace tras</h1>
 
+      {mapClickTarget !== null && (
+        <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-300 rounded text-sm text-amber-800 flex items-center justify-between">
+          <span>Klikněte na mapu pro umístění bodu</span>
+          <button onClick={() => setMapClickTarget(null)} className="text-amber-600 hover:text-amber-800 font-medium">Zrušit</button>
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div className="col-span-1 space-y-3">
-          <AddressField label="Start" entry={start} onChange={setStart} onGeocode={() => geocodeEntry(start, setStart)} color="green" />
+          <AddressField
+            label="Start"
+            entry={start}
+            onChange={setStart}
+            color="green"
+            isMapTarget={mapClickTarget === 'start'}
+            onMapClick={() => setMapClickTarget(t => t === 'start' ? null : 'start')}
+            showGps
+            onGps={handleGps}
+          />
 
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -90,16 +155,24 @@ export default function RoutesPage() {
                   label={`Cíl ${i + 1}`}
                   entry={w}
                   onChange={e => updateWaypoint(i, e)}
-                  onGeocode={() => geocodeEntry(w, e => updateWaypoint(i, e))}
                   color="blue"
+                  isMapTarget={mapClickTarget === i}
+                  onMapClick={() => setMapClickTarget(t => t === i ? null : i)}
                   onRemove={waypoints.length > 1 ? () => removeWaypoint(i) : undefined}
                 />
               </div>
             ))}
           </div>
 
-          <AddressField label="Konec (volitelný)" entry={end} onChange={setEnd} onGeocode={() => geocodeEntry(end, setEnd)} color="red"
-            onRemove={end.point || end.address ? () => setEnd(emptyEntry()) : undefined} />
+          <AddressField
+            label="Konec (volitelný)"
+            entry={end}
+            onChange={setEnd}
+            color="red"
+            isMapTarget={mapClickTarget === 'end'}
+            onMapClick={() => setMapClickTarget(t => t === 'end' ? null : 'end')}
+            onRemove={end.point || end.address ? () => setEnd(emptyEntry()) : undefined}
+          />
 
           <button
             onClick={handleOptimize}
@@ -111,9 +184,10 @@ export default function RoutesPage() {
         </div>
 
         <div className="col-span-2">
-          <div className="h-96 rounded overflow-hidden shadow mb-3">
+          <div className={`h-96 rounded overflow-hidden shadow mb-3 ${mapCursorClass}`}>
             <MapContainer center={mapCenter} zoom={11} style={{ height: '100%', width: '100%' }}>
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <MapClickHandler target={mapClickTarget} onPlace={handleMapPlace} />
               {(result?.orderedPoints ?? [start.point, ...waypoints.map(w => w.point), end.point].filter(Boolean) as RoutePoint[]).map((p, i) => (
                 <Marker key={i} position={[p.lat, p.lon]}>
                   <Popup>{i === 0 ? 'Start: ' : i === (result?.orderedPoints.length ?? 0) - 1 && end.point ? 'Konec: ' : `${i}. `}{p.name}</Popup>
@@ -159,40 +233,114 @@ export default function RoutesPage() {
   )
 }
 
-function AddressField({ label, entry, onChange, onGeocode, color, onRemove }: {
+function AddressField({
+  label, entry, onChange, color, isMapTarget, onMapClick, onRemove, showGps, onGps,
+}: {
   label: string
   entry: PointEntry
   onChange: (e: PointEntry) => void
-  onGeocode: () => void
   color: 'green' | 'blue' | 'red'
+  isMapTarget?: boolean
+  onMapClick: () => void
   onRemove?: () => void
+  showGps?: boolean
+  onGps?: () => void
 }) {
+  const [suggestions, setSuggestions] = useState<RoutePoint[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
   const colorMap = { green: 'bg-green-500', blue: 'bg-blue-500', red: 'bg-red-500' }
+
+  const handleChange = (val: string) => {
+    onChange({ ...entry, address: val, point: null })
+    setSuggestions([])
+
+    const gmapsPoint = parseGoogleMapsUrl(val)
+    if (gmapsPoint) {
+      onChange({ address: val, point: gmapsPoint, geocoding: false })
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (val.trim().length < 3) { setShowSuggestions(false); return }
+    debounceRef.current = setTimeout(async () => {
+      const results = await nominatimSearch(val)
+      setSuggestions(results)
+      setShowSuggestions(results.length > 0)
+    }, 400)
+  }
+
+  const selectSuggestion = (pt: RoutePoint) => {
+    onChange({ address: pt.name, point: pt, geocoding: false })
+    setSuggestions([])
+    setShowSuggestions(false)
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   return (
-    <div className="bg-white rounded shadow p-3">
+    <div className="bg-white rounded shadow p-3" ref={containerRef}>
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${colorMap[color]}`}></span>
           <span className="text-xs font-medium text-gray-600">{label}</span>
-          {entry.point && <span className="text-xs text-green-600">✓ Nalezeno</span>}
+          {entry.point && <span className="text-xs text-green-600">✓</span>}
         </div>
-        {onRemove && <button onClick={onRemove} className="text-gray-400 hover:text-red-500 text-xs">✕</button>}
+        <div className="flex items-center gap-1">
+          {showGps && onGps && (
+            <button
+              onClick={onGps}
+              disabled={entry.geocoding}
+              title="Použít GPS polohu"
+              className="px-1.5 py-0.5 bg-gray-100 border rounded text-xs hover:bg-gray-200 disabled:opacity-50"
+            >
+              {entry.geocoding ? '...' : '📍'}
+            </button>
+          )}
+          <button
+            onClick={onMapClick}
+            title="Kliknout na mapu"
+            className={`px-1.5 py-0.5 border rounded text-xs hover:bg-gray-200 ${isMapTarget ? 'bg-amber-200 border-amber-400' : 'bg-gray-100'}`}
+          >
+            🗺
+          </button>
+          {onRemove && <button onClick={onRemove} className="text-gray-400 hover:text-red-500 text-xs ml-1">✕</button>}
+        </div>
       </div>
-      <div className="flex gap-1">
+      <div className="relative">
         <input
           value={entry.address}
-          onChange={e => onChange({ ...entry, address: e.target.value, point: null })}
-          onKeyDown={e => { if (e.key === 'Enter') onGeocode() }}
-          placeholder="Zadejte adresu..."
-          className="flex-1 border rounded px-2 py-1 text-sm"
+          onChange={e => handleChange(e.target.value)}
+          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+          placeholder="Adresa nebo odkaz Google Maps..."
+          className="w-full border rounded px-2 py-1 text-sm"
         />
-        <button
-          onClick={onGeocode}
-          disabled={entry.geocoding || !entry.address.trim()}
-          className="px-2 py-1 bg-gray-100 border rounded text-xs hover:bg-gray-200 disabled:opacity-50"
-        >
-          {entry.geocoding ? '...' : 'Hledat'}
-        </button>
+        {showSuggestions && suggestions.length > 0 && (
+          <ul className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-white border rounded shadow-lg max-h-48 overflow-y-auto text-xs">
+            {suggestions.map((s, i) => (
+              <li
+                key={i}
+                onMouseDown={() => selectSuggestion(s)}
+                className="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-0 truncate"
+                title={s.name}
+              >
+                {s.name}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {entry.point && <p className="text-xs text-gray-500 mt-1 truncate">{entry.point.name}</p>}
     </div>

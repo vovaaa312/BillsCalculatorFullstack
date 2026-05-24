@@ -88,7 +88,12 @@ public class JsonIO {
         sb.append("    \"k500\": ").append(h.getKusy500()).append(",\n");
         sb.append("    \"k200\": ").append(h.getKusy200()).append(",\n");
         sb.append("    \"k100\": ").append(h.getKusy100()).append(",\n");
-        sb.append("    \"mince\": ").append(h.getMince()).append("\n");
+        sb.append("    \"k50\": ").append(h.getKusy50()).append(",\n");
+        sb.append("    \"k20\": ").append(h.getKusy20()).append(",\n");
+        sb.append("    \"k10\": ").append(h.getKusy10()).append(",\n");
+        sb.append("    \"k5\": ").append(h.getKusy5()).append(",\n");
+        sb.append("    \"k2\": ").append(h.getKusy2()).append(",\n");
+        sb.append("    \"k1\": ").append(h.getKusy1()).append("\n");
         sb.append("  }\n}\n");
         return sb.toString();
     }
@@ -146,7 +151,12 @@ public class JsonIO {
         h.setKusy500(intField(hBlock, "k500"));
         h.setKusy200(intField(hBlock, "k200"));
         h.setKusy100(intField(hBlock, "k100"));
-        h.setMince(intField(hBlock, "mince"));
+        h.setKusy50(intField(hBlock, "k50"));
+        h.setKusy20(intField(hBlock, "k20"));
+        h.setKusy10(intField(hBlock, "k10"));
+        h.setKusy5(intField(hBlock, "k5"));
+        h.setKusy2(intField(hBlock, "k2"));
+        h.setKusy1(intField(hBlock, "k1"));
         data.setHotovost(h);
     }
 
