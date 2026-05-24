@@ -7,6 +7,13 @@ interface Props {
   onClose?: () => void
 }
 
+const LANGS = [
+  { code: 'cs', label: 'Čeština' },
+  { code: 'en', label: 'English' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'ua', label: 'Українська' },
+]
+
 export default function Sidebar({ onClose }: Props) {
   const { logout } = useAuth()
   const { t, i18n } = useTranslation()
@@ -22,10 +29,9 @@ export default function Sidebar({ onClose }: Props) {
     { to: '/io',       label: t('nav.io'),         icon: '📂' },
   ]
 
-  const toggleLang = () => {
-    const next = i18n.language === 'cs' ? 'en' : 'cs'
-    i18n.changeLanguage(next)
-    localStorage.setItem('lang', next)
+  const changeLang = (lang: string) => {
+    i18n.changeLanguage(lang)
+    localStorage.setItem('lang', lang)
   }
 
   return (
@@ -60,12 +66,15 @@ export default function Sidebar({ onClose }: Props) {
         >
           {theme === 'dark' ? '☀️ ' + t('nav.themeLight') : '🌙 ' + t('nav.themeDark')}
         </button>
-        <button
-          onClick={toggleLang}
-          className="w-full px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded transition-colors text-center"
+        <select
+          value={i18n.language}
+          onChange={e => changeLang(e.target.value)}
+          className="w-full px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded transition-colors text-center cursor-pointer"
         >
-          {i18n.language === 'cs' ? 'English' : 'Čeština'}
-        </button>
+          {LANGS.map(l => (
+            <option key={l.code} value={l.code}>{l.label}</option>
+          ))}
+        </select>
       </div>
       <button
         onClick={() => { logout(); onClose?.() }}

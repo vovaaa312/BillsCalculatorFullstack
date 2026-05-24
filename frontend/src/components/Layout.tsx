@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from '../context/ThemeContext'
 import Sidebar from './Sidebar'
 
+const LANGS = ['cs', 'en', 'ru', 'ua']
+
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
@@ -24,8 +26,9 @@ export default function Layout() {
   const active = links.find(l => pathname.startsWith(l.to))
   const title = active?.label ?? 'Bills Calculator'
 
-  const toggleLang = () => {
-    const next = i18n.language === 'cs' ? 'en' : 'cs'
+  const cycleLang = () => {
+    const idx = LANGS.indexOf(i18n.language)
+    const next = LANGS[(idx + 1) % LANGS.length]
     i18n.changeLanguage(next)
     localStorage.setItem('lang', next)
   }
@@ -58,8 +61,8 @@ export default function Layout() {
           <button onClick={toggleTheme} className="text-xs bg-gray-700 px-2 py-1 rounded">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <button onClick={toggleLang} className="text-xs bg-gray-700 px-2 py-1 rounded">
-            {i18n.language === 'cs' ? 'EN' : 'CS'}
+          <button onClick={cycleLang} className="text-xs bg-gray-700 px-2 py-1 rounded uppercase w-8">
+            {i18n.language}
           </button>
         </header>
 

@@ -130,7 +130,9 @@
     "downloadPdf": "Stáhnout PDF",
     "loading": "Načítání...",
     "langCs": "Čeština",
-    "langEn": "English"
+    "langEn": "English",
+    "langRu": "Русский",
+    "langUa": "Українська"
   },
   "io": {
     "title": "Import / Export",
