@@ -8,13 +8,13 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class RoutePoint {
-    private String address;
+    private String name;
     private double lat;
     private double lon;
     private boolean resolved;
 
-    public RoutePoint(String address) {
-        this.address = address;
+    public RoutePoint(String name) {
+        this.name = name;
         this.resolved = false;
     }
 }

@@ -9,7 +9,8 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public class RouteResultDto {
-    private RoutePoint start;
-    private List<RoutePoint> optimizedRoute;
+    private List<RoutePoint> orderedPoints;
     private List<SegmentDto> segments;
+    private double totalDistanceKm;
+    private double totalDurationMin;
 }

@@ -49,7 +49,7 @@ export default function FakturyPage() {
   if (isLoading) return <div className="p-4">Načítání...</div>
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-4 items-start">
       <div className="w-60 shrink-0">
         <FilterPanel filter={filter} onChange={setFilter} onClear={() => setFilter({})} />
       </div>

@@ -21,7 +21,7 @@ public class GeocodingHelper {
             "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=";
 
     public static void resolve(RoutePoint point) throws Exception {
-        String query = URLEncoder.encode(point.getAddress(), StandardCharsets.UTF_8);
+        String query = URLEncoder.encode(point.getName(), StandardCharsets.UTF_8);
         HttpURLConnection conn = (HttpURLConnection) new URL(NOMINATIM_URL + query).openConnection();
         conn.setRequestProperty("User-Agent", "BillsCalculatorApp/1.0");
         conn.setConnectTimeout(8000);
@@ -29,7 +29,7 @@ public class GeocodingHelper {
         if (conn.getResponseCode() != 200) throw new Exception("Geocoding HTTP " + conn.getResponseCode());
         String body = readBody(conn);
         JsonNode arr = MAPPER.readTree(body);
-        if (!arr.isArray() || arr.isEmpty()) throw new Exception("Address not found: " + point.getAddress());
+        if (!arr.isArray() || arr.isEmpty()) throw new Exception("Address not found: " + point.getName());
         JsonNode obj = arr.get(0);
         point.setLat(obj.get("lat").asDouble());
         point.setLon(obj.get("lon").asDouble());

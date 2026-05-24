@@ -42,7 +42,7 @@ export default function VydajePage() {
   if (isLoading) return <div className="p-4">Načítání...</div>
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-4 items-start">
       <div className="w-60 shrink-0">
         <div className="bg-white rounded shadow p-4 sticky top-4 space-y-3 text-sm">
           <div className="flex items-center justify-between">
