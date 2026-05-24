@@ -40,7 +40,7 @@ export default function Layout() {
 
       {/* Mobile slide-in sidebar overlay */}
       {menuOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
+        <div className="fixed inset-0 z-[900] flex md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMenuOpen(false)} />
           <div className="relative z-10">
             <Sidebar onClose={() => setMenuOpen(false)} />

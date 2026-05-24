@@ -173,6 +173,13 @@ export default function FakturyPage() {
                                 <td className="text-right py-1 font-semibold">{(p.totalPrice ?? 0).toFixed(2)}</td>
                               </tr>
                             ))}
+                            <tr className="border-t-2 border-blue-300 dark:border-blue-700 font-bold text-gray-700 dark:text-gray-100">
+                              <td className="py-1">{t('invoice.itemsTotal')}</td>
+                              <td className="text-right py-1">{f.items.reduce((s, p) => s + (Number(p.quantity) || 0), 0)} ks</td>
+                              <td colSpan={3}></td>
+                              <td className="text-right py-1">{f.items.reduce((s, p) => s + (p.vatAmount ?? 0), 0).toFixed(2)}</td>
+                              <td className="text-right py-1">{f.items.reduce((s, p) => s + (p.totalPrice ?? 0), 0).toFixed(2)}</td>
+                            </tr>
                           </tbody>
                         </table>
                       </td>

@@ -269,7 +269,7 @@ export default function RoutesPage() {
         </div>
 
         <div className="md:col-span-2">
-          <div className={`h-96 rounded overflow-hidden shadow mb-3 ${mapCursorClass}`}>
+          <div className={`relative isolate h-96 rounded overflow-hidden shadow mb-3 ${mapCursorClass}`}>
             <MapContainer center={mapCenter} zoom={11} style={{ height: '100%', width: '100%' }}>
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <MapClickHandler target={mapClickTarget} onPlace={handleMapPlace} />
