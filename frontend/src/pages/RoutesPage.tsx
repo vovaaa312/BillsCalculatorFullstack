@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { optimizeRoute } from '../api/routes'
+import { optimizeRoute, resolveMapsUrl } from '../api/routes'
 import type { RoutePoint, RouteResult } from '../types/route'
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -52,8 +52,11 @@ function googleLink(points: RoutePoint[]) {
 }
 
 function mapyCzLink(points: RoutePoint[]) {
-  const coords = points.map(p => `${p.lon},${p.lat}`).join(';')
-  return `https://mapy.cz/zakladni?planovani-trasy&routePoints=${coords}`
+  const start = `${points[0].lon},${points[0].lat}`
+  const end = `${points[points.length - 1].lon},${points[points.length - 1].lat}`
+  const middle = points.slice(1, -1).map(p => `${p.lon},${p.lat}`)
+  const base = `https://mapy.com/fnc/v1/route?mapset=basic&start=${start}&end=${end}&routeType=car_fast`
+  return middle.length > 0 ? `${base}&waypoints=${middle.join(';')}` : base
 }
 
 function parseGoogleMapsUrl(str: string): RoutePoint | null {
@@ -409,14 +412,23 @@ function AddressField({
   const colorMap = { green: 'bg-green-500', blue: 'bg-blue-500', red: 'bg-red-500' }
 
   const handleChange = (val: string) => {
-    onChange({ ...entry, address: val, point: null })
+    onChange({ ...entry, address: val, point: null, geocoding: false })
     setSuggestions([])
 
+    // Full Google Maps URL — extract coords directly
     const gmapsPoint = parseGoogleMapsUrl(val)
     if (gmapsPoint) {
       onChange({ address: val, point: gmapsPoint, geocoding: false })
-      setSuggestions([])
       setShowSuggestions(false)
+      return
+    }
+
+    // Short Google Maps link — resolve via backend
+    if (/maps\.app\.goo\.gl\/|goo\.gl\/maps/.test(val)) {
+      onChange({ address: val, point: null, geocoding: true })
+      resolveMapsUrl(val)
+        .then(pt => onChange({ address: pt.name, point: pt, geocoding: false }))
+        .catch(() => onChange({ address: val, point: null, geocoding: false }))
       return
     }
 

@@ -14,9 +14,12 @@ public class ReportService {
 
     public String buildText(User user, String lang) {
         AppData data = ioService.buildAppData(user);
-        ReportStrings strings = "en".equalsIgnoreCase(lang)
-                ? new EnglishReportStrings()
-                : new CzechReportStrings();
+        ReportStrings strings = switch (lang.toLowerCase()) {
+            case "en" -> new EnglishReportStrings();
+            case "ru" -> new RussianReportStrings();
+            case "ua" -> new UkrainianReportStrings();
+            default  -> new CzechReportStrings();
+        };
         return ReportBuilder.build(data, strings);
     }
 

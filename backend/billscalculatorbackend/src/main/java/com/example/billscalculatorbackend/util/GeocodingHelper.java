@@ -20,6 +20,23 @@ public class GeocodingHelper {
     private static final String NOMINATIM_URL =
             "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=";
 
+    public static String reverseGeocode(double lat, double lon) {
+        try {
+            String url = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon;
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setRequestProperty("User-Agent", "BillsCalculatorApp/1.0");
+            conn.setConnectTimeout(6000);
+            conn.setReadTimeout(6000);
+            if (conn.getResponseCode() != 200) return null;
+            JsonNode obj = MAPPER.readTree(readBody(conn));
+            JsonNode name = obj.get("display_name");
+            return name != null ? name.asText() : null;
+        } catch (Exception e) {
+            log.warn("Reverse geocode error: {}", e.getMessage());
+            return null;
+        }
+    }
+
     public static void resolve(RoutePoint point) throws Exception {
         String query = URLEncoder.encode(point.getName(), StandardCharsets.UTF_8);
         HttpURLConnection conn = (HttpURLConnection) new URL(NOMINATIM_URL + query).openConnection();

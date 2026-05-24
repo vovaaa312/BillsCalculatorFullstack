@@ -30,4 +30,9 @@ public class RouteController extends BaseController {
     public ResponseEntity<RoutePoint> geocode(@RequestBody Map<String, String> body) throws Exception {
         return ResponseEntity.ok(routeService.geocode(body.get("address")));
     }
+
+    @GetMapping("/resolve-maps-url")
+    public ResponseEntity<RoutePoint> resolveMapsUrl(@RequestParam String url) throws Exception {
+        return ResponseEntity.ok(routeService.resolveMapsUrl(url));
+    }
 }

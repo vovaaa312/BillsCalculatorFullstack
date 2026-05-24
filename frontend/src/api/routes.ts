@@ -6,3 +6,6 @@ export const geocodeAddress = (address: string) =>
 
 export const optimizeRoute = (req: RouteRequest) =>
   client.post<RouteResult>('/routes/optimize', req).then(r => r.data)
+
+export const resolveMapsUrl = (url: string) =>
+  client.get<RoutePoint>('/routes/resolve-maps-url', { params: { url } }).then(r => r.data)
