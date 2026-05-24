@@ -1,8 +1,8 @@
 import client from './client'
-import type { Hotovost } from '../types/hotovost'
+import type { Cash } from '../types/hotovost'
 
-export const getHotovost = () =>
-  client.get<Hotovost>('/hotovost').then(r => r.data)
+export const getCash = () =>
+  client.get<Cash>('/cash').then(r => r.data)
 
-export const updateHotovost = (h: Hotovost) =>
-  client.put<Hotovost>('/hotovost', h).then(r => r.data)
+export const updateCash = (c: Cash) =>
+  client.put<Cash>('/cash', c).then(r => r.data)

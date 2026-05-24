@@ -1,6 +1,6 @@
 package com.example.billscalculatorbackend.service;
 
-import com.example.billscalculatorbackend.model.Faktura;
+import com.example.billscalculatorbackend.model.Invoice;
 import com.example.billscalculatorbackend.util.PdfParser;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -13,11 +13,11 @@ import java.util.List;
 @Service
 public class PdfParserService {
 
-    public List<Faktura> parseUpload(MultipartFile file) throws Exception {
+    public List<Invoice> parseUpload(MultipartFile file) throws Exception {
         String text = extractText(file);
         if (text.isBlank()) return List.of();
-        Faktura faktura = PdfParser.parse(text);
-        return faktura != null ? List.of(faktura) : List.of();
+        Invoice invoice = PdfParser.parse(text);
+        return invoice != null ? List.of(invoice) : List.of();
     }
 
     private String extractText(MultipartFile file) throws Exception {

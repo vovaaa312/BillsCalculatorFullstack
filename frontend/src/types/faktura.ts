@@ -1,36 +1,36 @@
-export type TypPlatby = 'HOTOVOST' | 'PREVOD'
-export type StatusFaktury = 'SPLNENA' | 'NESPLNENA'
+export type PaymentType = 'HOTOVOST' | 'PREVOD'
+export type InvoiceStatus = 'SPLNENA' | 'NESPLNENA'
 
-export interface Polozka {
+export interface InvoiceItem {
   id?: number
-  nazev: string
-  mnozstvi: number
-  jcena: number
-  jcenaBezDph: number
-  cena: number
-  dphProcent: number
-  dphCastka: number
-  kcCelkem: number
+  name: string
+  quantity: number
+  unitPrice: number
+  unitPriceNoVat: number
+  price: number
+  vatPercent: number
+  vatAmount: number
+  totalPrice: number
 }
 
-export interface Faktura {
+export interface Invoice {
   id?: number
-  nazev: string
-  castka: number
-  typPlatby: TypPlatby
-  status: StatusFaktury
-  datum: string
-  polozky: Polozka[]
-  soucetDph?: number
-  soucetKcCelkem?: number
-  soucetCenaBezDph?: number
-  soucetMnozstvi?: number
+  name: string
+  amount: number
+  paymentType: PaymentType
+  status: InvoiceStatus
+  date: string
+  items: InvoiceItem[]
+  totalVat?: number
+  totalPrice?: number
+  totalPriceNoVat?: number
+  totalQuantity?: number
 }
 
-export interface FakturaFilter {
-  nazev?: string
-  typPlatby?: TypPlatby
-  status?: StatusFaktury
+export interface InvoiceFilter {
+  name?: string
+  paymentType?: PaymentType
+  status?: InvoiceStatus
   dateFrom?: string
   dateTo?: string
   amountMin?: number

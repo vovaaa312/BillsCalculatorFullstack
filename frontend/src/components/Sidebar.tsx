@@ -1,15 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-
-const links = [
-  { to: '/faktury',  label: 'Faktury',         icon: '🧾' },
-  { to: '/vydaje',   label: 'Výdaje',           icon: '💸' },
-  { to: '/hotovost', label: 'Hotovost',          icon: '💰' },
-  { to: '/driver',   label: 'Řidič',             icon: '🚗' },
-  { to: '/routes',   label: 'Trasy',             icon: '🗺️' },
-  { to: '/report',   label: 'Report',            icon: '📊' },
-  { to: '/io',       label: 'Import / Export',   icon: '📂' },
-]
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   onClose?: () => void
@@ -17,6 +8,24 @@ interface Props {
 
 export default function Sidebar({ onClose }: Props) {
   const { logout } = useAuth()
+  const { t, i18n } = useTranslation()
+
+  const links = [
+    { to: '/faktury',  label: t('nav.invoices'), icon: '🧾' },
+    { to: '/vydaje',   label: t('nav.expenses'),  icon: '💸' },
+    { to: '/hotovost', label: t('nav.cash'),       icon: '💰' },
+    { to: '/driver',   label: t('nav.driver'),     icon: '🚗' },
+    { to: '/routes',   label: t('nav.routes'),     icon: '🗺️' },
+    { to: '/report',   label: t('nav.report'),     icon: '📊' },
+    { to: '/io',       label: t('nav.io'),         icon: '📂' },
+  ]
+
+  const toggleLang = () => {
+    const next = i18n.language === 'cs' ? 'en' : 'cs'
+    i18n.changeLanguage(next)
+    localStorage.setItem('lang', next)
+  }
+
   return (
     <aside className="w-52 min-h-screen bg-gray-900 text-white flex flex-col">
       <div className="px-4 py-5 text-lg font-bold border-b border-gray-700 flex items-center justify-between">
@@ -42,11 +51,19 @@ export default function Sidebar({ onClose }: Props) {
           </NavLink>
         ))}
       </nav>
+      <div className="px-4 pb-2">
+        <button
+          onClick={toggleLang}
+          className="w-full px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded transition-colors text-center"
+        >
+          {i18n.language === 'cs' ? '🇬🇧 English' : '🇨🇿 Čeština'}
+        </button>
+      </div>
       <button
         onClick={() => { logout(); onClose?.() }}
         className="mx-4 mb-4 px-3 py-2 text-sm bg-red-600 hover:bg-red-700 rounded transition-colors"
       >
-        Odhlásit
+        {t('nav.logout')}
       </button>
     </aside>
   )

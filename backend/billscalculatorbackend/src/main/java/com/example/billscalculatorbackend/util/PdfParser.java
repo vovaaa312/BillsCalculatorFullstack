@@ -1,9 +1,9 @@
 package com.example.billscalculatorbackend.util;
 
-import com.example.billscalculatorbackend.model.Faktura;
-import com.example.billscalculatorbackend.model.Polozka;
-import com.example.billscalculatorbackend.model.StatusFaktury;
-import com.example.billscalculatorbackend.model.TypPlatby;
+import com.example.billscalculatorbackend.model.Invoice;
+import com.example.billscalculatorbackend.model.InvoiceItem;
+import com.example.billscalculatorbackend.model.InvoiceStatus;
+import com.example.billscalculatorbackend.model.PaymentType;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -16,31 +16,31 @@ public class PdfParser {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    public static Faktura parse(String text) {
-        return buildFaktura(text);
+    public static Invoice parse(String text) {
+        return buildInvoice(text);
     }
 
-    private static Faktura buildFaktura(String text) {
-        Faktura f = new Faktura();
-        f.setNazev(extractNazev(text));
-        f.setTypPlatby(extractTyp(text));
-        f.setStatus(StatusFaktury.NESPLNENA);
-        f.setDatum(extractDatum(text));
-        List<Polozka> items = extractPolozky(text);
-        f.getPolozky().addAll(items);
-        int total = extractCastka(text);
-        if (total > 0) f.setCastka(total);
-        else f.recomputeCastkaFromPolozky();
+    private static Invoice buildInvoice(String text) {
+        Invoice f = new Invoice();
+        f.setName(extractName(text));
+        f.setPaymentType(extractPaymentType(text));
+        f.setStatus(InvoiceStatus.NESPLNENA);
+        f.setDate(extractDate(text));
+        List<InvoiceItem> items = extractItems(text);
+        f.getItems().addAll(items);
+        int total = extractAmount(text);
+        if (total > 0) f.setAmount(total);
+        else f.recomputeAmountFromItems();
         return f;
     }
 
-    private static String extractNazev(String text) {
+    private static String extractName(String text) {
         Matcher m = Pattern.compile("objedn[aá]vky\\s*:\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE).matcher(text);
         if (m.find()) { String name = m.group(1).trim(); if (!name.isEmpty()) return name; }
         return "Neznamy odberatel";
     }
 
-    private static int extractCastka(String text) {
+    private static int extractAmount(String text) {
         Matcher m = Pattern.compile("CELKEM\\s+K\\s+[ÚU]HRAD[EĚ][^\\d]*?([\\d\\s\\u00a0]+[,.]\\d{2})",
                 Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(text);
         if (m.find()) return parseAmount(m.group(1));
@@ -50,18 +50,18 @@ public class PdfParser {
         return 0;
     }
 
-    private static TypPlatby extractTyp(String text) {
+    private static PaymentType extractPaymentType(String text) {
         Matcher m = Pattern.compile("Forma\\s+[úu]hrady[\\s:]*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE).matcher(text);
         if (m.find()) {
             String forma = m.group(1).trim().toLowerCase();
-            if (forma.contains("hotov")) return TypPlatby.HOTOVOST;
-            if (forma.contains("převod") || forma.contains("prevod") || forma.contains("bank")) return TypPlatby.PREVOD;
+            if (forma.contains("hotov")) return PaymentType.HOTOVOST;
+            if (forma.contains("převod") || forma.contains("prevod") || forma.contains("bank")) return PaymentType.PREVOD;
         }
-        if (text.toLowerCase().contains("uhrazeno hotov")) return TypPlatby.HOTOVOST;
-        return TypPlatby.PREVOD;
+        if (text.toLowerCase().contains("uhrazeno hotov")) return PaymentType.HOTOVOST;
+        return PaymentType.PREVOD;
     }
 
-    private static LocalDate extractDatum(String text) {
+    private static LocalDate extractDate(String text) {
         Matcher m = Pattern.compile("Datum\\s+vystaven[ií][\\s:]*(\\d{2}\\.\\d{2}\\.\\d{4})").matcher(text);
         if (m.find()) { try { return LocalDate.parse(m.group(1), DATE_FMT); } catch (Exception ignored) {} }
         Matcher m2 = Pattern.compile("(\\d{2}\\.\\d{2}\\.\\d{4})").matcher(text);
@@ -69,14 +69,14 @@ public class PdfParser {
         return LocalDate.now();
     }
 
-    private static List<Polozka> extractPolozky(String text) {
-        List<Polozka> inline = extractPolozkyInline(text);
+    private static List<InvoiceItem> extractItems(String text) {
+        List<InvoiceItem> inline = extractItemsInline(text);
         if (!inline.isEmpty()) return inline;
-        return extractPolozkyColumnar(text);
+        return extractItemsColumnar(text);
     }
 
-    private static List<Polozka> extractPolozkyInline(String text) {
-        List<Polozka> out = new ArrayList<>();
+    private static List<InvoiceItem> extractItemsInline(String text) {
+        List<InvoiceItem> out = new ArrayList<>();
         String[] lines = text.split("\\r?\\n");
         boolean inSection = false;
         String num = "(\\d{1,3}(?:[\\s\\u00a0]\\d{3})*[,.]\\d{2})";
@@ -92,14 +92,14 @@ public class PdfParser {
             int colon = name.lastIndexOf(':');
             if (colon >= 0 && colon < name.length()-1) name = name.substring(colon+1).trim();
             try {
-                out.add(new Polozka(name, Integer.parseInt(m.group(2)), parseDouble(m.group(3)), parseDouble(m.group(4)), parseDouble(m.group(5)), Integer.parseInt(m.group(6)), parseDouble(m.group(7)), parseDouble(m.group(8))));
+                out.add(new InvoiceItem(name, Integer.parseInt(m.group(2)), parseDouble(m.group(3)), parseDouble(m.group(4)), parseDouble(m.group(5)), Integer.parseInt(m.group(6)), parseDouble(m.group(7)), parseDouble(m.group(8))));
             } catch (NumberFormatException ignored) {}
         }
         return out;
     }
 
-    private static List<Polozka> extractPolozkyColumnar(String text) {
-        List<Polozka> out = new ArrayList<>();
+    private static List<InvoiceItem> extractItemsColumnar(String text) {
+        List<InvoiceItem> out = new ArrayList<>();
         String[] lines = text.split("\\r?\\n");
         boolean inNamesSection = false;
         List<String> names = new ArrayList<>();
@@ -154,7 +154,7 @@ public class PdfParser {
             double jcenaBezDph=i<jcenaBezDphs.size()?jcenaBezDphs.get(i):0;
             int dphPct2=i<dphs.size()?dphs.get(i):12;
             double total2=i<totals.size()?totals.get(i):jcena*qty;
-            out.add(new Polozka(names.get(i),qty,jcena,jcenaBezDph,jcena,dphPct2,jcena-jcenaBezDph,total2));
+            out.add(new InvoiceItem(names.get(i),qty,jcena,jcenaBezDph,jcena,dphPct2,jcena-jcenaBezDph,total2));
         }
         return out;
     }

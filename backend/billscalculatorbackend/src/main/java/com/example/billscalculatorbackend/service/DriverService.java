@@ -10,9 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,9 +24,14 @@ public class DriverService {
     }
 
     public List<DriverShift> getFiltered(User user, DriverFilterDto filter) {
-        LocalDateTime from = filter.getDateFrom() != null ? filter.getDateFrom().atStartOfDay() : null;
-        LocalDateTime to   = filter.getDateTo()   != null ? filter.getDateTo().atTime(LocalTime.MAX) : null;
-        return driverRepo.findFiltered(user, filter.getDriverName(), from, to);
+        return driverRepo.findByUserOrderByStartDesc(user).stream()
+            .filter(d -> filter.getDriverName() == null ||
+                         d.getDriverName().toLowerCase().contains(filter.getDriverName().toLowerCase()))
+            .filter(d -> filter.getDateFrom() == null ||
+                         !d.getStart().toLocalDate().isBefore(filter.getDateFrom()))
+            .filter(d -> filter.getDateTo() == null ||
+                         !d.getStart().toLocalDate().isAfter(filter.getDateTo()))
+            .collect(Collectors.toList());
     }
 
     @Transactional

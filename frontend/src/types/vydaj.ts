@@ -1,6 +1,6 @@
-export interface Vydaj {
+export interface Expense {
   id?: number
-  nazev: string
-  castka: number
-  datum?: string
+  name: string
+  amount: number
+  date?: string
 }

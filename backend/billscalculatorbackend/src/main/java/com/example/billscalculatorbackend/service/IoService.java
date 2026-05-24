@@ -11,17 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IoService {
 
-    private final FakturaRepository   fakturaRepo;
-    private final VydajRepository     vydajRepo;
+    private final InvoiceRepository   invoiceRepo;
+    private final ExpenseRepository   expenseRepo;
     private final DriverShiftRepository driverRepo;
-    private final HotovostRepository  hotovostRepo;
+    private final CashRepository      cashRepo;
 
     public AppData buildAppData(User user) {
         AppData data = new AppData();
-        data.getFaktury().addAll(fakturaRepo.findByUserWithPolozky(user));
-        data.getVydaje().addAll(vydajRepo.findByUser(user));
+        data.getInvoices().addAll(invoiceRepo.findByUserWithItems(user));
+        data.getExpenses().addAll(expenseRepo.findByUser(user));
         data.getDriverShifts().addAll(driverRepo.findByUserOrderByStartDesc(user));
-        hotovostRepo.findByUser(user).ifPresent(data::setHotovost);
+        cashRepo.findByUser(user).ifPresent(data::setCash);
         return data;
     }
 
@@ -39,38 +39,38 @@ public class IoService {
     @Transactional
     public void replaceAllData(User user, AppData data) {
         clearAll(user);
-        data.getFaktury().forEach(f -> {
+        data.getInvoices().forEach(f -> {
             f.setId(null);
             f.setUser(user);
-            f.getPolozky().forEach(p -> { p.setId(null); p.setFaktura(f); });
-            fakturaRepo.save(f);
+            f.getItems().forEach(p -> { p.setId(null); p.setInvoice(f); });
+            invoiceRepo.save(f);
         });
-        data.getVydaje().forEach(v -> { v.setId(null); v.setUser(user); vydajRepo.save(v); });
+        data.getExpenses().forEach(v -> { v.setId(null); v.setUser(user); expenseRepo.save(v); });
         data.getDriverShifts().forEach(d -> { d.setId(null); d.setUser(user); driverRepo.save(d); });
-        if (data.getHotovost() != null) {
-            Hotovost h = hotovostRepo.findByUser(user).orElse(new Hotovost());
-            h.setUser(user);
-            h.setKusy5000(data.getHotovost().getKusy5000());
-            h.setKusy2000(data.getHotovost().getKusy2000());
-            h.setKusy1000(data.getHotovost().getKusy1000());
-            h.setKusy500(data.getHotovost().getKusy500());
-            h.setKusy200(data.getHotovost().getKusy200());
-            h.setKusy100(data.getHotovost().getKusy100());
-            h.setKusy50(data.getHotovost().getKusy50());
-            h.setKusy20(data.getHotovost().getKusy20());
-            h.setKusy10(data.getHotovost().getKusy10());
-            h.setKusy5(data.getHotovost().getKusy5());
-            h.setKusy2(data.getHotovost().getKusy2());
-            h.setKusy1(data.getHotovost().getKusy1());
-            hotovostRepo.save(h);
+        if (data.getCash() != null) {
+            Cash c = cashRepo.findByUser(user).orElse(new Cash());
+            c.setUser(user);
+            c.setCount5000(data.getCash().getCount5000());
+            c.setCount2000(data.getCash().getCount2000());
+            c.setCount1000(data.getCash().getCount1000());
+            c.setCount500(data.getCash().getCount500());
+            c.setCount200(data.getCash().getCount200());
+            c.setCount100(data.getCash().getCount100());
+            c.setCount50(data.getCash().getCount50());
+            c.setCount20(data.getCash().getCount20());
+            c.setCount10(data.getCash().getCount10());
+            c.setCount5(data.getCash().getCount5());
+            c.setCount2(data.getCash().getCount2());
+            c.setCount1(data.getCash().getCount1());
+            cashRepo.save(c);
         }
     }
 
     @Transactional
     public void clearAll(User user) {
-        fakturaRepo.deleteByUser(user);
-        vydajRepo.deleteByUser(user);
+        invoiceRepo.deleteByUser(user);
+        expenseRepo.deleteByUser(user);
         driverRepo.deleteByUser(user);
-        hotovostRepo.deleteByUser(user);
+        cashRepo.deleteByUser(user);
     }
 }

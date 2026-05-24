@@ -6,60 +6,57 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Non-JPA helper used to aggregate DB data for ReportBuilder.
- */
 @Getter
 @Setter
 public class AppData {
 
-    private List<Faktura>     faktury      = new ArrayList<>();
-    private List<Vydaj>       vydaje       = new ArrayList<>();
+    private List<Invoice>     invoices     = new ArrayList<>();
+    private List<Expense>     expenses     = new ArrayList<>();
     private List<DriverShift> driverShifts = new ArrayList<>();
-    private Hotovost          hotovost     = new Hotovost();
+    private Cash              cash         = new Cash();
 
-    public int getTotalFaktury() {
+    public int getInvoiceTotal() {
         int sum = 0;
-        for (Faktura f : faktury) sum += f.getCastka();
+        for (Invoice f : invoices) sum += f.getAmount();
         return sum;
     }
 
-    public int getTotalPrevodem() {
+    public int getTransferTotal() {
         int sum = 0;
-        for (Faktura f : faktury)
-            if (f.getTypPlatby() == TypPlatby.PREVOD && f.getStatus() == StatusFaktury.SPLNENA)
-                sum += f.getCastka();
+        for (Invoice f : invoices)
+            if (f.getPaymentType() == PaymentType.PREVOD && f.getStatus() == InvoiceStatus.SPLNENA)
+                sum += f.getAmount();
         return sum;
     }
 
-    public int getTotalHotovostFaktury() {
+    public int getCashInvoiceTotal() {
         int sum = 0;
-        for (Faktura f : faktury)
-            if (f.getTypPlatby() == TypPlatby.HOTOVOST && f.getStatus() == StatusFaktury.SPLNENA)
-                sum += f.getCastka();
+        for (Invoice f : invoices)
+            if (f.getPaymentType() == PaymentType.HOTOVOST && f.getStatus() == InvoiceStatus.SPLNENA)
+                sum += f.getAmount();
         return sum;
     }
 
-    public int getTotalNesplnene() {
+    public int getUnpaidTotal() {
         int sum = 0;
-        for (Faktura f : faktury)
-            if (f.getStatus() == StatusFaktury.NESPLNENA)
-                sum += f.getCastka();
+        for (Invoice f : invoices)
+            if (f.getStatus() == InvoiceStatus.NESPLNENA)
+                sum += f.getAmount();
         return sum;
     }
 
-    public int getTotalVydaje() {
+    public int getExpenseTotal() {
         int sum = 0;
-        for (Vydaj v : vydaje) sum += v.getCastka();
+        for (Expense v : expenses) sum += v.getAmount();
         return sum;
     }
 
-    public int getOcekavanaHotovost() {
-        return getTotalHotovostFaktury() - getTotalVydaje();
+    public int getExpectedCash() {
+        return getCashInvoiceTotal() - getExpenseTotal();
     }
 
-    public int getRozdil() {
-        return hotovost.getTotal() - getOcekavanaHotovost();
+    public int getCashDifference() {
+        return cash.getTotal() - getExpectedCash();
     }
 
     public void notifyChanged() {}

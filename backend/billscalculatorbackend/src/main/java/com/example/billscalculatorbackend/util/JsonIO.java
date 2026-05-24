@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Minimal hand-written JSON serializer — no external libs.
- * Used for import/export to stay compatible with the Android app format.
+ * Hand-written JSON serializer for import/export.
+ * Key names kept compatible with Android app format.
  */
 public class JsonIO {
 
@@ -18,29 +18,29 @@ public class JsonIO {
         sb.append("{\n");
 
         sb.append("  \"faktury\": [\n");
-        List<Faktura> fList = new ArrayList<>(data.getFaktury());
+        List<Invoice> fList = new ArrayList<>(data.getInvoices());
         for (int i = 0; i < fList.size(); i++) {
-            Faktura f = fList.get(i);
+            Invoice f = fList.get(i);
             sb.append("    {\n");
-            sb.append("      \"nazev\": ").append(jsonStr(f.getNazev())).append(",\n");
-            sb.append("      \"castka\": ").append(f.getCastka()).append(",\n");
-            sb.append("      \"typ\": ").append(jsonStr(f.getTypPlatby().name())).append(",\n");
+            sb.append("      \"nazev\": ").append(jsonStr(f.getName())).append(",\n");
+            sb.append("      \"castka\": ").append(f.getAmount()).append(",\n");
+            sb.append("      \"typ\": ").append(jsonStr(f.getPaymentType().name())).append(",\n");
             sb.append("      \"status\": ").append(jsonStr(f.getStatus().name())).append(",\n");
-            sb.append("      \"datum\": ").append(jsonStr(f.getDatum() != null ? f.getDatum().toString() : "")).append(",\n");
+            sb.append("      \"datum\": ").append(jsonStr(f.getDate() != null ? f.getDate().toString() : "")).append(",\n");
             sb.append("      \"polozky\": [");
-            List<Polozka> pList = f.getPolozky();
+            List<InvoiceItem> pList = f.getItems();
             for (int j = 0; j < pList.size(); j++) {
-                Polozka p = pList.get(j);
+                InvoiceItem p = pList.get(j);
                 sb.append(j == 0 ? "\n" : ",\n");
                 sb.append("        {");
-                sb.append("\"nazev\":").append(jsonStr(p.getNazev())).append(",");
-                sb.append("\"mnozstvi\":").append(p.getMnozstvi()).append(",");
-                sb.append("\"jcena\":").append(p.getJcena()).append(",");
-                sb.append("\"jcenaBezDph\":").append(p.getJcenaBezDph()).append(",");
-                sb.append("\"cena\":").append(p.getCena()).append(",");
-                sb.append("\"dphProcent\":").append(p.getDphProcent()).append(",");
-                sb.append("\"dphCastka\":").append(p.getDphCastka()).append(",");
-                sb.append("\"kcCelkem\":").append(p.getKcCelkem());
+                sb.append("\"nazev\":").append(jsonStr(p.getName())).append(",");
+                sb.append("\"mnozstvi\":").append(p.getQuantity()).append(",");
+                sb.append("\"jcena\":").append(p.getUnitPrice()).append(",");
+                sb.append("\"jcenaBezDph\":").append(p.getUnitPriceNoVat()).append(",");
+                sb.append("\"cena\":").append(p.getPrice()).append(",");
+                sb.append("\"dphProcent\":").append(p.getVatPercent()).append(",");
+                sb.append("\"dphCastka\":").append(p.getVatAmount()).append(",");
+                sb.append("\"kcCelkem\":").append(p.getTotalPrice());
                 sb.append("}");
             }
             if (!pList.isEmpty()) sb.append("\n      ");
@@ -51,12 +51,12 @@ public class JsonIO {
         sb.append("  ],\n");
 
         sb.append("  \"vydaje\": [\n");
-        List<Vydaj> vList = new ArrayList<>(data.getVydaje());
+        List<Expense> vList = new ArrayList<>(data.getExpenses());
         for (int i = 0; i < vList.size(); i++) {
-            Vydaj v = vList.get(i);
+            Expense v = vList.get(i);
             sb.append("    {\n");
-            sb.append("      \"nazev\": ").append(jsonStr(v.getNazev())).append(",\n");
-            sb.append("      \"castka\": ").append(v.getCastka()).append("\n");
+            sb.append("      \"nazev\": ").append(jsonStr(v.getName())).append(",\n");
+            sb.append("      \"castka\": ").append(v.getAmount()).append("\n");
             sb.append("    }");
             if (i < vList.size() - 1) sb.append(",");
             sb.append("\n");
@@ -80,57 +80,57 @@ public class JsonIO {
         }
         sb.append("  ],\n");
 
-        Hotovost h = data.getHotovost();
+        Cash c = data.getCash();
         sb.append("  \"hotovost\": {\n");
-        sb.append("    \"k5000\": ").append(h.getKusy5000()).append(",\n");
-        sb.append("    \"k2000\": ").append(h.getKusy2000()).append(",\n");
-        sb.append("    \"k1000\": ").append(h.getKusy1000()).append(",\n");
-        sb.append("    \"k500\": ").append(h.getKusy500()).append(",\n");
-        sb.append("    \"k200\": ").append(h.getKusy200()).append(",\n");
-        sb.append("    \"k100\": ").append(h.getKusy100()).append(",\n");
-        sb.append("    \"k50\": ").append(h.getKusy50()).append(",\n");
-        sb.append("    \"k20\": ").append(h.getKusy20()).append(",\n");
-        sb.append("    \"k10\": ").append(h.getKusy10()).append(",\n");
-        sb.append("    \"k5\": ").append(h.getKusy5()).append(",\n");
-        sb.append("    \"k2\": ").append(h.getKusy2()).append(",\n");
-        sb.append("    \"k1\": ").append(h.getKusy1()).append("\n");
+        sb.append("    \"k5000\": ").append(c.getCount5000()).append(",\n");
+        sb.append("    \"k2000\": ").append(c.getCount2000()).append(",\n");
+        sb.append("    \"k1000\": ").append(c.getCount1000()).append(",\n");
+        sb.append("    \"k500\": ").append(c.getCount500()).append(",\n");
+        sb.append("    \"k200\": ").append(c.getCount200()).append(",\n");
+        sb.append("    \"k100\": ").append(c.getCount100()).append(",\n");
+        sb.append("    \"k50\": ").append(c.getCount50()).append(",\n");
+        sb.append("    \"k20\": ").append(c.getCount20()).append(",\n");
+        sb.append("    \"k10\": ").append(c.getCount10()).append(",\n");
+        sb.append("    \"k5\": ").append(c.getCount5()).append(",\n");
+        sb.append("    \"k2\": ").append(c.getCount2()).append(",\n");
+        sb.append("    \"k1\": ").append(c.getCount1()).append("\n");
         sb.append("  }\n}\n");
         return sb.toString();
     }
 
     public static void deserialize(AppData data, String json) {
-        data.getFaktury().clear();
-        data.getVydaje().clear();
+        data.getInvoices().clear();
+        data.getExpenses().clear();
         data.getDriverShifts().clear();
 
         for (String obj : splitObjects(extractArray(json, "faktury"))) {
-            String nazev = strField(obj, "nazev");
-            int castka   = intField(obj, "castka");
-            TypPlatby typ;
-            try { typ = TypPlatby.valueOf(strField(obj, "typ")); } catch (Exception e) { typ = TypPlatby.PREVOD; }
-            StatusFaktury stat;
-            try { stat = StatusFaktury.valueOf(strField(obj, "status")); } catch (Exception e) { stat = StatusFaktury.NESPLNENA; }
-            String datumStr = strField(obj, "datum");
-            LocalDate datum = datumStr.isEmpty() ? LocalDate.now() : LocalDate.parse(datumStr);
-            Faktura faktura = new Faktura(nazev, castka, typ, stat, datum);
+            String name = strField(obj, "nazev");
+            int amount   = intField(obj, "castka");
+            PaymentType typ;
+            try { typ = PaymentType.valueOf(strField(obj, "typ")); } catch (Exception e) { typ = PaymentType.PREVOD; }
+            InvoiceStatus stat;
+            try { stat = InvoiceStatus.valueOf(strField(obj, "status")); } catch (Exception e) { stat = InvoiceStatus.NESPLNENA; }
+            String dateStr = strField(obj, "datum");
+            LocalDate date = dateStr.isEmpty() ? LocalDate.now() : LocalDate.parse(dateStr);
+            Invoice invoice = new Invoice(name, amount, typ, stat, date);
             for (String pObj : splitObjects(extractArray(obj, "polozky"))) {
-                Polozka p = new Polozka();
-                p.setNazev(strField(pObj, "nazev"));
-                p.setMnozstvi(intField(pObj, "mnozstvi"));
-                p.setJcena(doubleField(pObj, "jcena"));
-                p.setJcenaBezDph(doubleField(pObj, "jcenaBezDph"));
-                p.setCena(doubleField(pObj, "cena"));
-                p.setDphProcent(intField(pObj, "dphProcent"));
-                p.setDphCastka(doubleField(pObj, "dphCastka"));
-                p.setKcCelkem(doubleField(pObj, "kcCelkem"));
-                p.setFaktura(faktura);
-                faktura.getPolozky().add(p);
+                InvoiceItem p = new InvoiceItem();
+                p.setName(strField(pObj, "nazev"));
+                p.setQuantity(intField(pObj, "mnozstvi"));
+                p.setUnitPrice(doubleField(pObj, "jcena"));
+                p.setUnitPriceNoVat(doubleField(pObj, "jcenaBezDph"));
+                p.setPrice(doubleField(pObj, "cena"));
+                p.setVatPercent(intField(pObj, "dphProcent"));
+                p.setVatAmount(doubleField(pObj, "dphCastka"));
+                p.setTotalPrice(doubleField(pObj, "kcCelkem"));
+                p.setInvoice(invoice);
+                invoice.getItems().add(p);
             }
-            data.getFaktury().add(faktura);
+            data.getInvoices().add(invoice);
         }
 
         for (String obj : splitObjects(extractArray(json, "vydaje")))
-            data.getVydaje().add(new Vydaj(strField(obj, "nazev"), intField(obj, "castka")));
+            data.getExpenses().add(new Expense(strField(obj, "nazev"), intField(obj, "castka")));
 
         for (String obj : splitObjects(extractArray(json, "driverShifts"))) {
             String name = strField(obj, "driverName");
@@ -144,20 +144,20 @@ public class JsonIO {
         }
 
         String hBlock = extractObject(json, "hotovost");
-        Hotovost h = data.getHotovost() != null ? data.getHotovost() : new Hotovost();
-        h.setKusy5000(intField(hBlock, "k5000"));
-        h.setKusy2000(intField(hBlock, "k2000"));
-        h.setKusy1000(intField(hBlock, "k1000"));
-        h.setKusy500(intField(hBlock, "k500"));
-        h.setKusy200(intField(hBlock, "k200"));
-        h.setKusy100(intField(hBlock, "k100"));
-        h.setKusy50(intField(hBlock, "k50"));
-        h.setKusy20(intField(hBlock, "k20"));
-        h.setKusy10(intField(hBlock, "k10"));
-        h.setKusy5(intField(hBlock, "k5"));
-        h.setKusy2(intField(hBlock, "k2"));
-        h.setKusy1(intField(hBlock, "k1"));
-        data.setHotovost(h);
+        Cash c = data.getCash() != null ? data.getCash() : new Cash();
+        c.setCount5000(intField(hBlock, "k5000"));
+        c.setCount2000(intField(hBlock, "k2000"));
+        c.setCount1000(intField(hBlock, "k1000"));
+        c.setCount500(intField(hBlock, "k500"));
+        c.setCount200(intField(hBlock, "k200"));
+        c.setCount100(intField(hBlock, "k100"));
+        c.setCount50(intField(hBlock, "k50"));
+        c.setCount20(intField(hBlock, "k20"));
+        c.setCount10(intField(hBlock, "k10"));
+        c.setCount5(intField(hBlock, "k5"));
+        c.setCount2(intField(hBlock, "k2"));
+        c.setCount1(intField(hBlock, "k1"));
+        data.setCash(c);
     }
 
     private static String jsonStr(String s) {
@@ -170,8 +170,8 @@ public class JsonIO {
         int bracket = json.indexOf('[', start); if (bracket < 0) return "";
         int depth = 0;
         for (int i = bracket; i < json.length(); i++) {
-            char c = json.charAt(i);
-            if (c == '[') depth++; else if (c == ']') { depth--; if (depth == 0) return json.substring(bracket + 1, i); }
+            char ch = json.charAt(i);
+            if (ch == '[') depth++; else if (ch == ']') { depth--; if (depth == 0) return json.substring(bracket + 1, i); }
         }
         return "";
     }
@@ -181,8 +181,8 @@ public class JsonIO {
         int brace = json.indexOf('{', start); if (brace < 0) return "";
         int depth = 0;
         for (int i = brace; i < json.length(); i++) {
-            char c = json.charAt(i);
-            if (c == '{') depth++; else if (c == '}') { depth--; if (depth == 0) return json.substring(brace + 1, i); }
+            char ch = json.charAt(i);
+            if (ch == '{') depth++; else if (ch == '}') { depth--; if (depth == 0) return json.substring(brace + 1, i); }
         }
         return "";
     }
@@ -191,9 +191,9 @@ public class JsonIO {
         List<String> result = new ArrayList<>();
         int depth = 0, start = -1;
         for (int i = 0; i < body.length(); i++) {
-            char c = body.charAt(i);
-            if (c == '{') { if (depth == 0) start = i; depth++; }
-            else if (c == '}') { depth--; if (depth == 0 && start >= 0) { result.add(body.substring(start + 1, i)); start = -1; } }
+            char ch = body.charAt(i);
+            if (ch == '{') { if (depth == 0) start = i; depth++; }
+            else if (ch == '}') { depth--; if (depth == 0 && start >= 0) { result.add(body.substring(start + 1, i)); start = -1; } }
         }
         return result;
     }
@@ -211,7 +211,7 @@ public class JsonIO {
         int colon = obj.indexOf(':', ki), ns = colon + 1;
         while (ns < obj.length() && (obj.charAt(ns) == ' ' || obj.charAt(ns) == '\t')) ns++;
         int ne = ns;
-        while (ne < obj.length()) { char c = obj.charAt(ne); if (Character.isDigit(c) || c == '-' || c == '.' || c == 'e' || c == 'E' || c == '+') ne++; else break; }
+        while (ne < obj.length()) { char ch = obj.charAt(ne); if (Character.isDigit(ch) || ch == '-' || ch == '.' || ch == 'e' || ch == 'E' || ch == '+') ne++; else break; }
         try { return Double.parseDouble(obj.substring(ns, ne).trim()); } catch (NumberFormatException e) { return 0; }
     }
 
