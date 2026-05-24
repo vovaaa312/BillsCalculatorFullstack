@@ -7,7 +7,9 @@
     "routes": "Trasy",
     "report": "Report",
     "io": "I/E",
-    "logout": "Odhlásit"
+    "logout": "Odhlásit",
+    "themeDark": "Tmavý režim",
+    "themeLight": "Světlý režim"
   },
   "invoice": {
     "title": "Faktury",
@@ -106,6 +108,20 @@
     "filterDriver": "Jméno řidiče",
     "filterDateFrom": "Datum od",
     "filterDateTo": "Datum do"
+  },
+  "routes": {
+    "title": "Optimalizace tras",
+    "clickMap": "Klikněte na mapu pro umístění bodu",
+    "start": "Start",
+    "end": "Konec (volitelný)",
+    "destinations": "Cíle",
+    "addDest": "Přidat cíl",
+    "dest": "Cíl",
+    "optimize": "Optimalizovat trasu",
+    "optimizing": "Optimalizuji...",
+    "route": "Trasa",
+    "approxNote": "* přibližné vzdálenosti po ruční úpravě",
+    "resetOrder": "Obnovit pořadí"
   },
   "report": {
     "title": "Report",

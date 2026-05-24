@@ -23,6 +23,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useTranslation } from 'react-i18next'
 
 L.Marker.prototype.options.icon = L.icon({ iconUrl, shadowUrl: iconShadow, iconAnchor: [12, 41] })
 
@@ -100,6 +101,7 @@ function MapClickHandler({ target, onPlace }: { target: MapClickTarget; onPlace:
 }
 
 export default function RoutesPage() {
+  const { t } = useTranslation()
   const [start, setStart] = useState<PointEntry>(emptyEntry())
   const [waypoints, setWaypoints] = useState<PointEntry[]>([emptyEntry()])
   const [end, setEnd] = useState<PointEntry>(emptyEntry())
@@ -159,12 +161,11 @@ export default function RoutesPage() {
     setEditablePoints(prev => {
       const oldIdx = prev.findIndex((_, i) => String(i) === active.id)
       const newIdx = prev.findIndex((_, i) => String(i) === over.id)
-      if (oldIdx <= 0 || newIdx <= 0) return prev  // start (idx 0) is fixed
+      if (oldIdx <= 0 || newIdx <= 0) return prev
       return arrayMove(prev, oldIdx, newIdx)
     })
   }
 
-  // Build a lookup map from original server segments for distance reuse
   const originalSegMap = useMemo(() => {
     const map = new Map<string, { distanceKm: number; durationMin: number }>()
     if (!result) return map
@@ -174,7 +175,6 @@ export default function RoutesPage() {
     return map
   }, [result])
 
-  // Derive display segments from current editable point order
   const displaySegments = useMemo(() => {
     if (editablePoints.length < 2) return []
     return editablePoints.slice(0, -1).map((from, i) => {
@@ -207,19 +207,19 @@ export default function RoutesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Optimalizace tras</h1>
+      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">{t('routes.title')}</h1>
 
       {mapClickTarget !== null && (
-        <div className="mb-2 px-3 py-2 bg-amber-50 border border-amber-300 rounded text-sm text-amber-800 flex items-center justify-between">
-          <span>Klikněte na mapu pro umístění bodu</span>
-          <button onClick={() => setMapClickTarget(null)} className="text-amber-600 hover:text-amber-800 font-medium">Zrušit</button>
+        <div className="mb-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 rounded text-sm text-amber-800 dark:text-amber-300 flex items-center justify-between">
+          <span>{t('routes.clickMap')}</span>
+          <button onClick={() => setMapClickTarget(null)} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 font-medium">{t('common.cancel')}</button>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div className="md:col-span-1 space-y-3">
           <AddressField
-            label="Start"
+            label={t('routes.start')}
             entry={start}
             onChange={setStart}
             color="green"
@@ -231,13 +231,13 @@ export default function RoutesPage() {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-700">Cíle</span>
-              <button onClick={addWaypoint} className="text-blue-600 text-xs hover:underline">+ Přidat cíl</button>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('routes.destinations')}</span>
+              <button onClick={addWaypoint} className="text-blue-500 text-xs hover:underline">+ {t('routes.addDest')}</button>
             </div>
             {waypoints.map((w, i) => (
               <div key={i} className="relative mb-2">
                 <AddressField
-                  label={`Cíl ${i + 1}`}
+                  label={`${t('routes.dest')} ${i + 1}`}
                   entry={w}
                   onChange={e => updateWaypoint(i, e)}
                   color="blue"
@@ -250,7 +250,7 @@ export default function RoutesPage() {
           </div>
 
           <AddressField
-            label="Konec (volitelný)"
+            label={t('routes.end')}
             entry={end}
             onChange={setEnd}
             color="red"
@@ -264,7 +264,7 @@ export default function RoutesPage() {
             disabled={!canOptimize || optimizeMut.isPending}
             className="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
           >
-            {optimizeMut.isPending ? 'Optimalizuji...' : 'Optimalizovat trasu'}
+            {optimizeMut.isPending ? t('routes.optimizing') : t('routes.optimize')}
           </button>
         </div>
 
@@ -286,44 +286,41 @@ export default function RoutesPage() {
           </div>
 
           {result && editablePoints.length > 0 && (
-            <div className="bg-white rounded shadow p-4 text-sm">
+            <div className="bg-white dark:bg-gray-800 rounded shadow p-4 text-sm">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <span className="font-semibold">
-                    Trasa: {totalDistKm.toFixed(1)} km{totalDurMin > 0 ? ` · ${Math.round(totalDurMin)} min` : ''}
+                  <span className="font-semibold dark:text-gray-100">
+                    {t('routes.route')}: {totalDistKm.toFixed(1)} km{totalDurMin > 0 ? ` · ${Math.round(totalDurMin)} min` : ''}
                   </span>
                   {hasApprox && (
-                    <span className="ml-2 text-xs text-amber-600">* přibližné vzdálenosti po ruční úpravě</span>
+                    <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">{t('routes.approxNote')}</span>
                   )}
                 </div>
                 <div className="flex gap-2">
                   {isReordered && (
                     <button
                       onClick={() => setEditablePoints([...result.orderedPoints])}
-                      className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200"
+                      className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-600"
                     >
-                      Obnovit pořadí
+                      {t('routes.resetOrder')}
                     </button>
                   )}
                   <a href={googleLink(editablePoints)} target="_blank" rel="noopener noreferrer"
-                    className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200">Google Maps</a>
+                    className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-200 dark:hover:bg-blue-800">Google Maps</a>
                   <a href={mapyCzLink(editablePoints)} target="_blank" rel="noopener noreferrer"
-                    className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">Mapy.cz</a>
+                    className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs hover:bg-green-200 dark:hover:bg-green-800">Mapy.cz</a>
                 </div>
               </div>
 
-              {/* Draggable point order list */}
-              <div className="mb-3 border rounded overflow-hidden">
-                {/* Fixed start point */}
+              <div className="mb-3 border dark:border-gray-700 rounded overflow-hidden">
                 {editablePoints[0] && (
-                  <div className="flex items-center gap-2 px-3 py-2 border-b bg-green-50">
-                    <span className="text-xs font-bold w-5 shrink-0 text-green-600">S</span>
-                    <span className="flex-1 text-xs text-gray-700 truncate" title={editablePoints[0].name}>
+                  <div className="flex items-center gap-2 px-3 py-2 border-b dark:border-gray-700 bg-green-50 dark:bg-green-950">
+                    <span className="text-xs font-bold w-5 shrink-0 text-green-600 dark:text-green-400">S</span>
+                    <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate" title={editablePoints[0].name}>
                       {editablePoints[0].name}
                     </span>
                   </div>
                 )}
-                {/* Sortable destinations */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext
                     items={editablePoints.slice(1).map((_, i) => String(i + 1))}
@@ -336,23 +333,22 @@ export default function RoutesPage() {
                 </DndContext>
               </div>
 
-              {/* Segment details */}
               <ol className="space-y-2">
                 {displaySegments.map((seg, i) => (
-                  <li key={i} className="flex items-center justify-between py-2 border-b last:border-0">
+                  <li key={i} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0">
                     <div className="min-w-0 flex-1">
-                      <span className="font-medium">{i + 1}. </span>
-                      <span className="text-gray-700">{seg.from.name}</span>
-                      <span className="text-gray-400 mx-1">→</span>
-                      <span className="text-gray-700">{seg.to.name}</span>
-                      <span className="text-gray-500 text-xs ml-2">
+                      <span className="font-medium dark:text-gray-200">{i + 1}. </span>
+                      <span className="text-gray-700 dark:text-gray-300">{seg.from.name}</span>
+                      <span className="text-gray-400 dark:text-gray-500 mx-1">→</span>
+                      <span className="text-gray-700 dark:text-gray-300">{seg.to.name}</span>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs ml-2">
                         {seg.distanceKm !== null
                           ? `${seg.distanceKm.toFixed(1)} km · ${Math.round(seg.durationMin!)} min`
-                          : `~${seg.approxKm!.toFixed(1)} km (vzdušná čára)`}
+                          : `~${seg.approxKm!.toFixed(1)} km`}
                       </span>
                     </div>
                     <a href={wazeLink(seg.from, seg.to)} target="_blank" rel="noopener noreferrer"
-                      className="px-2 py-1 bg-sky-100 text-sky-700 rounded text-xs hover:bg-sky-200 shrink-0 ml-2">Waze</a>
+                      className="px-2 py-1 bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 rounded text-xs hover:bg-sky-200 dark:hover:bg-sky-800 shrink-0 ml-2">Waze</a>
                   </li>
                 ))}
               </ol>
@@ -376,14 +372,14 @@ function SortablePointRow({ id, index, point }: { id: string; index: number; poi
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 px-3 py-2 border-b last:border-0 bg-white"
+      className="flex items-center gap-2 px-3 py-2 border-b dark:border-gray-700 last:border-0 bg-white dark:bg-gray-800"
     >
-      <span className="text-xs font-bold w-5 shrink-0 text-gray-400">{index}</span>
-      <span className="flex-1 text-xs text-gray-700 truncate" title={point.name}>{point.name}</span>
+      <span className="text-xs font-bold w-5 shrink-0 text-gray-400 dark:text-gray-500">{index}</span>
+      <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate" title={point.name}>{point.name}</span>
       <button
         {...attributes}
         {...listeners}
-        className="shrink-0 px-2 py-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none"
+        className="shrink-0 px-2 py-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
         title="Přetáhnout"
       >
         ⠿
@@ -450,12 +446,12 @@ function AddressField({
   }, [])
 
   return (
-    <div className="bg-white rounded shadow p-3" ref={containerRef}>
+    <div className="bg-white dark:bg-gray-800 rounded shadow p-3" ref={containerRef}>
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${colorMap[color]}`}></span>
-          <span className="text-xs font-medium text-gray-600">{label}</span>
-          {entry.point && <span className="text-xs text-green-600">✓</span>}
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
+          {entry.point && <span className="text-xs text-green-600 dark:text-green-400">✓</span>}
         </div>
         <div className="flex items-center gap-1">
           {showGps && onGps && (
@@ -463,7 +459,7 @@ function AddressField({
               onClick={onGps}
               disabled={entry.geocoding}
               title="Použít GPS polohu"
-              className="px-1.5 py-0.5 bg-gray-100 border rounded text-xs hover:bg-gray-200 disabled:opacity-50"
+              className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
             >
               {entry.geocoding ? '...' : '📍'}
             </button>
@@ -471,7 +467,7 @@ function AddressField({
           <button
             onClick={onMapClick}
             title="Kliknout na mapu"
-            className={`px-1.5 py-0.5 border rounded text-xs hover:bg-gray-200 ${isMapTarget ? 'bg-amber-200 border-amber-400' : 'bg-gray-100'}`}
+            className={`px-1.5 py-0.5 border dark:border-gray-600 rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-600 ${isMapTarget ? 'bg-amber-200 dark:bg-amber-800 border-amber-400 dark:border-amber-600' : 'bg-gray-100 dark:bg-gray-700'}`}
           >
             🗺
           </button>
@@ -484,15 +480,15 @@ function AddressField({
           onChange={e => handleChange(e.target.value)}
           onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
           placeholder="Adresa nebo odkaz Google Maps..."
-          className="w-full border rounded px-2 py-1 text-sm"
+          className="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm"
         />
         {showSuggestions && suggestions.length > 0 && (
-          <ul className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-white border rounded shadow-lg max-h-48 overflow-y-auto text-xs">
+          <ul className="absolute z-50 left-0 right-0 top-full mt-0.5 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto text-xs">
             {suggestions.map((s, i) => (
               <li
                 key={i}
                 onMouseDown={() => selectSuggestion(s)}
-                className="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-0 truncate"
+                className="px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer border-b dark:border-gray-700 last:border-0 truncate"
                 title={s.name}
               >
                 {s.name}
@@ -501,7 +497,7 @@ function AddressField({
           </ul>
         )}
       </div>
-      {entry.point && <p className="text-xs text-gray-500 mt-1 truncate">{entry.point.name}</p>}
+      {entry.point && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{entry.point.name}</p>}
     </div>
   )
 }

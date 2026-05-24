@@ -35,19 +35,19 @@ function DenomRow({ d, count, onAdj, onSet }: {
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm w-20 shrink-0">{d.label}</span>
-      <div className="flex items-center border rounded overflow-hidden">
-        <button onClick={() => onAdj(-1)} className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-sm font-bold">−</button>
+      <span className="text-sm w-20 shrink-0 dark:text-gray-300">{d.label}</span>
+      <div className="flex items-center border dark:border-gray-600 rounded overflow-hidden">
+        <button onClick={() => onAdj(-1)} className="px-2 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100 text-sm font-bold">−</button>
         <input
           type="number"
           min={0}
           value={count}
           onChange={e => onSet(+e.target.value)}
-          className="w-14 text-center text-sm py-1 border-x outline-none"
+          className="w-14 text-center text-sm py-1 border-x dark:border-gray-600 outline-none dark:bg-gray-800 dark:text-gray-100"
         />
-        <button onClick={() => onAdj(1)} className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-sm font-bold">+</button>
+        <button onClick={() => onAdj(1)} className="px-2 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100 text-sm font-bold">+</button>
       </div>
-      <span className="text-sm text-gray-500 ml-auto">{(count * d.value).toLocaleString('cs-CZ')} Kč</span>
+      <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">{(count * d.value).toLocaleString('cs-CZ')} Kč</span>
     </div>
   )
 }
@@ -74,40 +74,30 @@ export default function HotovostPage() {
   const coinsTotal = COINS.reduce((s, d) => s + (Number(form[d.key]) || 0) * d.value, 0)
   const total = banknotesTotal + coinsTotal
 
-  if (isLoading) return <div className="p-4">{t('common.loading')}</div>
+  if (isLoading) return <div className="p-4 dark:text-gray-300">{t('common.loading')}</div>
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">{t('cash.title')}</h1>
-      <div className="bg-white rounded shadow p-6 max-w-sm">
+      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">{t('cash.title')}</h1>
+      <div className="bg-white dark:bg-gray-800 rounded shadow p-6 max-w-sm">
         <div className="space-y-3 mb-4">
           {BANKNOTES.map(d => (
-            <DenomRow
-              key={d.key}
-              d={d}
-              count={Number(form[d.key]) || 0}
-              onAdj={delta => adj(d.key, delta)}
-              onSet={v => setKey(d.key, v)}
-            />
+            <DenomRow key={d.key} d={d} count={Number(form[d.key]) || 0}
+              onAdj={delta => adj(d.key, delta)} onSet={v => setKey(d.key, v)} />
           ))}
         </div>
 
-        <div className="border-t pt-3 mb-3">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">{t('cash.coins')}</p>
+        <div className="border-t dark:border-gray-700 pt-3 mb-3">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('cash.coins')}</p>
           <div className="space-y-3">
             {COINS.map(d => (
-              <DenomRow
-                key={d.key}
-                d={d}
-                count={Number(form[d.key]) || 0}
-                onAdj={delta => adj(d.key, delta)}
-                onSet={v => setKey(d.key, v)}
-              />
+              <DenomRow key={d.key} d={d} count={Number(form[d.key]) || 0}
+                onAdj={delta => adj(d.key, delta)} onSet={v => setKey(d.key, v)} />
             ))}
           </div>
         </div>
 
-        <div className="border-t pt-3 space-y-1 mb-4 text-sm text-gray-500">
+        <div className="border-t dark:border-gray-700 pt-3 space-y-1 mb-4 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex justify-between">
             <span>{t('cash.banknotes')}</span><span>{banknotesTotal.toLocaleString('cs-CZ')} Kč</span>
           </div>
@@ -116,8 +106,8 @@ export default function HotovostPage() {
           </div>
         </div>
 
-        <div className="border-t pt-3 flex items-center justify-between">
-          <span className="font-bold text-lg">{total.toLocaleString('cs-CZ')} Kč</span>
+        <div className="border-t dark:border-gray-700 pt-3 flex items-center justify-between">
+          <span className="font-bold text-lg dark:text-gray-100">{total.toLocaleString('cs-CZ')} Kč</span>
           <button
             onClick={() => updateMut.mutate(form)}
             disabled={updateMut.isPending}

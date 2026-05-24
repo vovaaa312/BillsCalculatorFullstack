@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '../context/ThemeContext'
 
 interface Props {
   onClose?: () => void
@@ -9,6 +10,7 @@ interface Props {
 export default function Sidebar({ onClose }: Props) {
   const { logout } = useAuth()
   const { t, i18n } = useTranslation()
+  const { theme, toggleTheme } = useTheme()
 
   const links = [
     { to: '/faktury',  label: t('nav.invoices'), icon: '🧾' },
@@ -51,12 +53,18 @@ export default function Sidebar({ onClose }: Props) {
           </NavLink>
         ))}
       </nav>
-      <div className="px-4 pb-2">
+      <div className="px-4 pb-2 space-y-2">
+        <button
+          onClick={toggleTheme}
+          className="w-full px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded transition-colors text-center"
+        >
+          {theme === 'dark' ? '☀️ ' + t('nav.themeLight') : '🌙 ' + t('nav.themeDark')}
+        </button>
         <button
           onClick={toggleLang}
           className="w-full px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded transition-colors text-center"
         >
-          {i18n.language === 'cs' ? '🇬🇧 English' : '🇨🇿 Čeština'}
+          {i18n.language === 'cs' ? 'English' : 'Čeština'}
         </button>
       </div>
       <button

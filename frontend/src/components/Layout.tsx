@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '../context/ThemeContext'
 import Sidebar from './Sidebar'
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
   const { t, i18n } = useTranslation()
+  const { theme, toggleTheme } = useTheme()
 
   const links = [
     { to: '/faktury',  label: t('nav.invoices'), icon: '🧾' },
@@ -29,7 +31,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex">
@@ -53,6 +55,9 @@ export default function Layout() {
         <header className="md:hidden bg-gray-900 text-white px-4 py-3 flex items-center gap-3 sticky top-0 z-40">
           <button onClick={() => setMenuOpen(true)} className="text-2xl leading-none">☰</button>
           <span className="font-semibold text-base flex-1">{title}</span>
+          <button onClick={toggleTheme} className="text-xs bg-gray-700 px-2 py-1 rounded">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           <button onClick={toggleLang} className="text-xs bg-gray-700 px-2 py-1 rounded">
             {i18n.language === 'cs' ? 'EN' : 'CS'}
           </button>

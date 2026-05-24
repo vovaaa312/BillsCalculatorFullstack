@@ -7,7 +7,9 @@
     "routes": "Routes",
     "report": "Report",
     "io": "I/E",
-    "logout": "Logout"
+    "logout": "Logout",
+    "themeDark": "Dark mode",
+    "themeLight": "Light mode"
   },
   "invoice": {
     "title": "Invoices",
@@ -106,6 +108,20 @@
     "filterDriver": "Driver name",
     "filterDateFrom": "Date from",
     "filterDateTo": "Date to"
+  },
+  "routes": {
+    "title": "Route Optimization",
+    "clickMap": "Click on the map to place a point",
+    "start": "Start",
+    "end": "End (optional)",
+    "destinations": "Destinations",
+    "addDest": "Add destination",
+    "dest": "Destination",
+    "optimize": "Optimize route",
+    "optimizing": "Optimizing...",
+    "route": "Route",
+    "approxNote": "* approximate distances after manual reorder",
+    "resetOrder": "Reset order"
   },
   "report": {
     "title": "Report",

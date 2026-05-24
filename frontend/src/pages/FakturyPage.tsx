@@ -5,6 +5,10 @@ import { getInvoices, createInvoice, updateInvoice, deleteInvoice, importInvoice
 import type { Invoice, InvoiceItem, InvoiceFilter, PaymentType, InvoiceStatus } from '../types/faktura'
 import Modal from '../components/Modal'
 
+const inp = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1'
+const inpLg = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-3 py-2 text-sm'
+const sel = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1'
+
 const emptyInvoice = (): Invoice => ({
   name: '',
   amount: 0,
@@ -51,7 +55,7 @@ export default function FakturyPage() {
   const totalAmount = invoices.reduce((s, f) => s + (f.totalPrice ?? f.amount ?? 0), 0)
   const hasFilter = Object.values(filter).some(Boolean)
 
-  if (isLoading) return <div className="p-4">{t('common.loading')}</div>
+  if (isLoading) return <div className="p-4 dark:text-gray-300">{t('common.loading')}</div>
 
   return (
     <div className="flex gap-4 items-start">
@@ -61,10 +65,10 @@ export default function FakturyPage() {
 
       {showFilter && (
         <div className="fixed inset-0 z-50 flex items-end md:hidden" onClick={() => setShowFilter(false)}>
-          <div className="w-full bg-white rounded-t-2xl shadow-xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+          <div className="w-full bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl p-4 pb-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold">{t('invoice.filterTitle')}</span>
-              <button onClick={() => setShowFilter(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              <span className="font-semibold dark:text-gray-100">{t('invoice.filterTitle')}</span>
+              <button onClick={() => setShowFilter(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">✕</button>
             </div>
             <FilterPanel filter={filter} onChange={f => setFilter(f)} onClear={() => { setFilter({}); setShowFilter(false) }} />
           </div>
@@ -74,13 +78,13 @@ export default function FakturyPage() {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold">{t('invoice.title')}</h1>
-            <p className="text-sm text-gray-500 mt-1">{t('invoice.total')}: {totalAmount.toFixed(2)} {t('common.currency')}</p>
+            <h1 className="text-2xl font-bold dark:text-gray-100">{t('invoice.title')}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('invoice.total')}: {totalAmount.toFixed(2)} {t('common.currency')}</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowFilter(v => !v)}
-              className={`md:hidden px-3 py-2 rounded text-sm border ${hasFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
+              className={`md:hidden px-3 py-2 rounded text-sm border ${hasFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-200 border-gray-300 dark:border-gray-600'}`}
             >
               {hasFilter ? '🔍 ●' : '🔍'}
             </button>
@@ -96,9 +100,9 @@ export default function FakturyPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded shadow overflow-auto">
+        <div className="bg-white dark:bg-gray-800 rounded shadow overflow-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+            <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase">
               <tr>
                 <th className="px-3 py-2 w-6"></th>
                 <th className="px-3 py-2 text-left">{t('invoice.colDate')}</th>
@@ -118,36 +122,36 @@ export default function FakturyPage() {
                 const total = f.totalPrice ?? f.amount ?? 0
                 const base = f.totalPriceNoVat ?? f.amount ?? 0
                 return [
-                  <tr key={f.id} className="border-t hover:bg-gray-50 cursor-pointer" onClick={() => f.id && toggleExpand(f.id)}>
-                    <td className="px-3 py-2 text-gray-400 text-xs">{f.items?.length > 0 ? (isOpen ? '▼' : '▶') : ''}</td>
-                    <td className="px-3 py-2">{f.date}</td>
+                  <tr key={f.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-100 cursor-pointer" onClick={() => f.id && toggleExpand(f.id)}>
+                    <td className="px-3 py-2 text-gray-400 dark:text-gray-500 text-xs">{f.items?.length > 0 ? (isOpen ? '▼' : '▶') : ''}</td>
+                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{f.date}</td>
                     <td className="px-3 py-2 font-medium">{f.name || '—'}</td>
                     <td className="px-3 py-2 text-right">{base.toFixed(2)}</td>
                     <td className="px-3 py-2 text-right">{vat.toFixed(2)}</td>
                     <td className="px-3 py-2 text-right font-semibold">{total.toFixed(2)}</td>
                     <td className="px-3 py-2">
-                      <span className={`px-2 py-0.5 rounded text-xs ${f.paymentType === 'HOTOVOST' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                      <span className={`px-2 py-0.5 rounded text-xs ${f.paymentType === 'HOTOVOST' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
                         {f.paymentType === 'HOTOVOST' ? t('invoice.paymentCash') : t('invoice.paymentTransfer')}
                       </span>
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`px-2 py-0.5 rounded text-xs ${f.status === 'SPLNENA' ? 'bg-gray-100 text-gray-600' : 'bg-red-100 text-red-700'}`}>
+                      <span className={`px-2 py-0.5 rounded text-xs ${f.status === 'SPLNENA' ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}`}>
                         {f.status === 'SPLNENA' ? t('invoice.statusDone') : t('invoice.statusPending')}
                       </span>
                     </td>
                     <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
                       <div className="flex gap-2 justify-end">
-                        <button onClick={() => setEditing(f)} className="text-blue-600 hover:underline text-xs">{t('common.edit')}</button>
+                        <button onClick={() => setEditing(f)} className="text-blue-500 hover:underline text-xs">{t('common.edit')}</button>
                         <button onClick={() => f.id && deleteMut.mutate(f.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
                       </div>
                     </td>
                   </tr>,
                   isOpen && f.items?.length > 0 && (
-                    <tr key={`${f.id}-items`} className="bg-blue-50">
+                    <tr key={`${f.id}-items`} className="bg-blue-50 dark:bg-blue-950">
                       <td colSpan={9} className="px-6 py-2">
                         <table className="w-full text-xs">
                           <thead>
-                            <tr className="text-gray-500">
+                            <tr className="text-gray-500 dark:text-gray-400">
                               <th className="text-left py-1">{t('invoice.itemName')}</th>
                               <th className="text-right py-1">{t('invoice.itemQty')}</th>
                               <th className="text-right py-1">J.cena</th>
@@ -159,7 +163,7 @@ export default function FakturyPage() {
                           </thead>
                           <tbody>
                             {f.items.map((p, i) => (
-                              <tr key={p.id ?? i} className="border-t border-blue-100">
+                              <tr key={p.id ?? i} className="border-t border-blue-100 dark:border-blue-900 dark:text-gray-200">
                                 <td className="py-1">{p.name}</td>
                                 <td className="text-right py-1">{p.quantity} ks</td>
                                 <td className="text-right py-1">{(p.unitPrice ?? 0).toFixed(2)}</td>
@@ -178,7 +182,7 @@ export default function FakturyPage() {
               })}
             </tbody>
           </table>
-          {invoices.length === 0 && <div className="text-center py-8 text-gray-400 text-sm">{t('invoice.noData')}</div>}
+          {invoices.length === 0 && <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">{t('invoice.noData')}</div>}
         </div>
 
         {editing && (
@@ -196,46 +200,46 @@ function FilterPanel({ filter, onChange, onClear }: { filter: InvoiceFilter; onC
   const set = (k: keyof InvoiceFilter, v: unknown) => onChange({ ...filter, [k]: v || undefined })
   const hasFilter = Object.values(filter).some(Boolean)
   return (
-    <div className="bg-white rounded shadow p-4 sticky top-4 space-y-3 text-sm">
+    <div className="bg-white dark:bg-gray-800 rounded shadow p-4 sticky top-4 space-y-3 text-sm">
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-gray-700">{t('invoice.filterTitle')}</span>
+        <span className="font-semibold text-gray-700 dark:text-gray-200">{t('invoice.filterTitle')}</span>
         {hasFilter && <button onClick={onClear} className="text-xs text-gray-400 hover:text-red-500">{t('invoice.filterClear')}</button>}
       </div>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">{t('invoice.filterClient')}</label>
-        <input value={filter.name ?? ''} onChange={e => set('name', e.target.value)} placeholder={t('common.search')} className="w-full border rounded px-2 py-1" />
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('invoice.filterClient')}</label>
+        <input value={filter.name ?? ''} onChange={e => set('name', e.target.value)} placeholder={t('common.search')} className={inp} />
       </div>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">{t('invoice.filterPayment')}</label>
-        <select value={filter.paymentType ?? ''} onChange={e => set('paymentType', e.target.value as PaymentType)} className="w-full border rounded px-2 py-1">
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('invoice.filterPayment')}</label>
+        <select value={filter.paymentType ?? ''} onChange={e => set('paymentType', e.target.value as PaymentType)} className={sel}>
           <option value="">{t('invoice.filterPaymentAll')}</option>
           <option value="HOTOVOST">{t('invoice.paymentCash')}</option>
           <option value="PREVOD">{t('invoice.paymentTransfer')}</option>
         </select>
       </div>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">{t('invoice.filterStatus')}</label>
-        <select value={filter.status ?? ''} onChange={e => set('status', e.target.value as InvoiceStatus)} className="w-full border rounded px-2 py-1">
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('invoice.filterStatus')}</label>
+        <select value={filter.status ?? ''} onChange={e => set('status', e.target.value as InvoiceStatus)} className={sel}>
           <option value="">{t('invoice.filterStatusAll')}</option>
           <option value="NESPLNENA">{t('invoice.statusPending')}</option>
           <option value="SPLNENA">{t('invoice.statusDone')}</option>
         </select>
       </div>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">{t('invoice.filterDateFrom')}</label>
-        <input type="date" value={filter.dateFrom ?? ''} onChange={e => set('dateFrom', e.target.value)} className="w-full border rounded px-2 py-1" />
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('invoice.filterDateFrom')}</label>
+        <input type="date" value={filter.dateFrom ?? ''} onChange={e => set('dateFrom', e.target.value)} className={inp} />
       </div>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">{t('invoice.filterDateTo')}</label>
-        <input type="date" value={filter.dateTo ?? ''} onChange={e => set('dateTo', e.target.value)} className="w-full border rounded px-2 py-1" />
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('invoice.filterDateTo')}</label>
+        <input type="date" value={filter.dateTo ?? ''} onChange={e => set('dateTo', e.target.value)} className={inp} />
       </div>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">{t('invoice.filterAmountFrom')}</label>
-        <input type="number" value={filter.amountMin ?? ''} onChange={e => set('amountMin', +e.target.value || undefined)} className="w-full border rounded px-2 py-1" />
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('invoice.filterAmountFrom')}</label>
+        <input type="number" value={filter.amountMin ?? ''} onChange={e => set('amountMin', +e.target.value || undefined)} className={inp} />
       </div>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">{t('invoice.filterAmountTo')}</label>
-        <input type="number" value={filter.amountMax ?? ''} onChange={e => set('amountMax', +e.target.value || undefined)} className="w-full border rounded px-2 py-1" />
+        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('invoice.filterAmountTo')}</label>
+        <input type="number" value={filter.amountMax ?? ''} onChange={e => set('amountMax', +e.target.value || undefined)} className={inp} />
       </div>
     </div>
   )
@@ -266,27 +270,27 @@ function InvoiceForm({ initial, onSave, onCancel }: { initial: Invoice; onSave: 
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-sm mb-1">{t('invoice.fieldClient')}</label>
-          <input value={form.name} onChange={e => set('name', e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+          <label className="block text-sm mb-1 dark:text-gray-300">{t('invoice.fieldClient')}</label>
+          <input value={form.name} onChange={e => set('name', e.target.value)} className={inpLg} />
         </div>
         <div>
-          <label className="block text-sm mb-1">{t('invoice.fieldDate')}</label>
-          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+          <label className="block text-sm mb-1 dark:text-gray-300">{t('invoice.fieldDate')}</label>
+          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} className={inpLg} />
         </div>
         <div>
-          <label className="block text-sm mb-1">{t('invoice.fieldBase')}</label>
-          <input type="number" value={form.amount} onChange={e => set('amount', +e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+          <label className="block text-sm mb-1 dark:text-gray-300">{t('invoice.fieldBase')}</label>
+          <input type="number" value={form.amount} onChange={e => set('amount', +e.target.value)} className={inpLg} />
         </div>
         <div>
-          <label className="block text-sm mb-1">{t('invoice.fieldPayment')}</label>
-          <select value={form.paymentType} onChange={e => set('paymentType', e.target.value as PaymentType)} className="w-full border rounded px-3 py-2 text-sm">
+          <label className="block text-sm mb-1 dark:text-gray-300">{t('invoice.fieldPayment')}</label>
+          <select value={form.paymentType} onChange={e => set('paymentType', e.target.value as PaymentType)} className={`${inpLg}`}>
             <option value="PREVOD">{t('invoice.paymentTransfer')}</option>
             <option value="HOTOVOST">{t('invoice.paymentCash')}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm mb-1">{t('invoice.fieldStatus')}</label>
-          <select value={form.status} onChange={e => set('status', e.target.value as InvoiceStatus)} className="w-full border rounded px-3 py-2 text-sm">
+          <label className="block text-sm mb-1 dark:text-gray-300">{t('invoice.fieldStatus')}</label>
+          <select value={form.status} onChange={e => set('status', e.target.value as InvoiceStatus)} className={`${inpLg}`}>
             <option value="NESPLNENA">{t('invoice.statusPending')}</option>
             <option value="SPLNENA">{t('invoice.statusDone')}</option>
           </select>
@@ -295,30 +299,30 @@ function InvoiceForm({ initial, onSave, onCancel }: { initial: Invoice; onSave: 
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-sm">{t('invoice.items')}</span>
-          <button onClick={addItem} className="text-blue-600 text-xs hover:underline">{t('invoice.addItem')}</button>
+          <span className="font-semibold text-sm dark:text-gray-200">{t('invoice.items')}</span>
+          <button onClick={addItem} className="text-blue-500 text-xs hover:underline">{t('invoice.addItem')}</button>
         </div>
         {form.items.map((p, i) => (
-          <div key={i} className="grid grid-cols-7 gap-1 mb-2 text-xs items-end border-b pb-2">
+          <div key={i} className="grid grid-cols-7 gap-1 mb-2 text-xs items-end border-b dark:border-gray-700 pb-2">
             <div className="col-span-2">
-              <label className="block mb-1 text-gray-500">{t('invoice.itemName')}</label>
-              <input value={p.name} onChange={e => updateItem(i, 'name', e.target.value)} className="w-full border rounded px-2 py-1" />
+              <label className="block mb-1 text-gray-500 dark:text-gray-400">{t('invoice.itemName')}</label>
+              <input value={p.name} onChange={e => updateItem(i, 'name', e.target.value)} className={inp} />
             </div>
             <div>
-              <label className="block mb-1 text-gray-500">{t('invoice.itemQty')}</label>
-              <input type="number" value={p.quantity} onChange={e => updateItem(i, 'quantity', +e.target.value)} className="w-full border rounded px-2 py-1" />
+              <label className="block mb-1 text-gray-500 dark:text-gray-400">{t('invoice.itemQty')}</label>
+              <input type="number" value={p.quantity} onChange={e => updateItem(i, 'quantity', +e.target.value)} className={inp} />
             </div>
             <div>
-              <label className="block mb-1 text-gray-500">{t('invoice.itemUnitPriceNoVat')}</label>
-              <input type="number" value={p.unitPriceNoVat} onChange={e => updateItem(i, 'unitPriceNoVat', +e.target.value)} className="w-full border rounded px-2 py-1" />
+              <label className="block mb-1 text-gray-500 dark:text-gray-400">{t('invoice.itemUnitPriceNoVat')}</label>
+              <input type="number" value={p.unitPriceNoVat} onChange={e => updateItem(i, 'unitPriceNoVat', +e.target.value)} className={inp} />
             </div>
             <div>
-              <label className="block mb-1 text-gray-500">{t('invoice.itemVatPct')}</label>
-              <input type="number" value={p.vatPercent} onChange={e => updateItem(i, 'vatPercent', +e.target.value)} className="w-full border rounded px-2 py-1" />
+              <label className="block mb-1 text-gray-500 dark:text-gray-400">{t('invoice.itemVatPct')}</label>
+              <input type="number" value={p.vatPercent} onChange={e => updateItem(i, 'vatPercent', +e.target.value)} className={inp} />
             </div>
             <div>
-              <label className="block mb-1 text-gray-500">{t('invoice.itemTotal')}</label>
-              <input readOnly value={(p.totalPrice ?? 0).toFixed(2)} className="w-full border rounded px-2 py-1 bg-gray-50" />
+              <label className="block mb-1 text-gray-500 dark:text-gray-400">{t('invoice.itemTotal')}</label>
+              <input readOnly value={(p.totalPrice ?? 0).toFixed(2)} className="w-full border dark:border-gray-600 rounded px-2 py-1 bg-gray-50 dark:bg-gray-900 dark:text-gray-300" />
             </div>
             <div className="flex items-end">
               <button onClick={() => removeItem(i)} className="text-red-500 hover:text-red-700 px-2 py-1">✕</button>
@@ -327,8 +331,8 @@ function InvoiceForm({ initial, onSave, onCancel }: { initial: Invoice; onSave: 
         ))}
       </div>
 
-      <div className="flex gap-2 justify-end pt-2 border-t">
-        <button onClick={onCancel} className="px-4 py-2 text-sm border rounded hover:bg-gray-50">{t('common.cancel')}</button>
+      <div className="flex gap-2 justify-end pt-2 border-t dark:border-gray-700">
+        <button onClick={onCancel} className="px-4 py-2 text-sm border dark:border-gray-600 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700">{t('common.cancel')}</button>
         <button onClick={() => onSave(form)} className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">{t('common.save')}</button>
       </div>
     </div>

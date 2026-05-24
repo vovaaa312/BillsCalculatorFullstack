@@ -14,13 +14,13 @@ export default function ReportPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">{t('report.title')}</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">{t('report.title')}</h1>
         <div className="flex gap-2">
-          <select value={lang} onChange={e => setLang(e.target.value as 'cs' | 'en')} className="border rounded px-2 py-1 text-sm">
+          <select value={lang} onChange={e => setLang(e.target.value as 'cs' | 'en')} className="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm">
             <option value="cs">{t('report.langCs')}</option>
             <option value="en">{t('report.langEn')}</option>
           </select>
-          <button onClick={() => refetch()} className="bg-gray-100 border px-3 py-1 rounded text-sm hover:bg-gray-200">
+          <button onClick={() => refetch()} className="bg-gray-100 dark:bg-gray-700 dark:text-gray-100 border dark:border-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-200 dark:hover:bg-gray-600">
             {t('report.refresh')}
           </button>
           <button onClick={() => downloadReportPdf(lang)} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
@@ -30,9 +30,9 @@ export default function ReportPage() {
       </div>
 
       {isLoading ? (
-        <div>{t('report.loading')}</div>
+        <div className="dark:text-gray-300">{t('report.loading')}</div>
       ) : (
-        <pre className="bg-white rounded shadow p-4 text-xs font-mono whitespace-pre overflow-auto max-h-[75vh]">
+        <pre className="bg-white dark:bg-gray-800 dark:text-gray-100 rounded shadow p-4 text-xs font-mono whitespace-pre overflow-auto max-h-[75vh]">
           {text}
         </pre>
       )}
