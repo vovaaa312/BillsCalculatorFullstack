@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { optimizeRoute } from '../api/routes'
 import type { RoutePoint, RouteResult } from '../types/route'
@@ -7,8 +7,37 @@ import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 L.Marker.prototype.options.icon = L.icon({ iconUrl, shadowUrl: iconShadow, iconAnchor: [12, 41] })
+
+function haversineKm(a: RoutePoint, b: RoutePoint): number {
+  const R = 6371
+  const dLat = (b.lat - a.lat) * Math.PI / 180
+  const dLon = (b.lon - a.lon) * Math.PI / 180
+  const sa = Math.sin(dLat / 2), so = Math.sin(dLon / 2)
+  const c = sa * sa + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * so * so
+  return R * 2 * Math.atan2(Math.sqrt(c), Math.sqrt(1 - c))
+}
+
+function segKey(from: RoutePoint, to: RoutePoint) {
+  return `${from.lat},${from.lon}→${to.lat},${to.lon}`
+}
 
 function wazeLink(from: RoutePoint, to: RoutePoint) {
   return `https://waze.com/ul?ll=${to.lat},${to.lon}&navigate=yes&from=${from.lat},${from.lon}`
@@ -75,9 +104,16 @@ export default function RoutesPage() {
   const [waypoints, setWaypoints] = useState<PointEntry[]>([emptyEntry()])
   const [end, setEnd] = useState<PointEntry>(emptyEntry())
   const [result, setResult] = useState<RouteResult | null>(null)
+  const [editablePoints, setEditablePoints] = useState<RoutePoint[]>([])
   const [mapClickTarget, setMapClickTarget] = useState<MapClickTarget>(null)
 
-  const optimizeMut = useMutation({ mutationFn: optimizeRoute, onSuccess: setResult })
+  const optimizeMut = useMutation({
+    mutationFn: optimizeRoute,
+    onSuccess: (res) => {
+      setResult(res)
+      setEditablePoints([...res.orderedPoints])
+    },
+  })
 
   const updateWaypoint = (i: number, e: PointEntry) =>
     setWaypoints(prev => prev.map((w, j) => j === i ? e : w))
@@ -112,11 +148,60 @@ export default function RoutesPage() {
     optimizeMut.mutate({ points })
   }
 
-  const mapCenter: [number, number] = result?.orderedPoints[0]
-    ? [result.orderedPoints[0].lat, result.orderedPoints[0].lon]
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setEditablePoints(prev => {
+      const oldIdx = prev.findIndex((_, i) => String(i) === active.id)
+      const newIdx = prev.findIndex((_, i) => String(i) === over.id)
+      if (oldIdx <= 0 || newIdx <= 0) return prev  // start (idx 0) is fixed
+      return arrayMove(prev, oldIdx, newIdx)
+    })
+  }
+
+  // Build a lookup map from original server segments for distance reuse
+  const originalSegMap = useMemo(() => {
+    const map = new Map<string, { distanceKm: number; durationMin: number }>()
+    if (!result) return map
+    for (const seg of result.segments) {
+      map.set(segKey(seg.from, seg.to), { distanceKm: seg.distanceKm, durationMin: seg.durationMin })
+    }
+    return map
+  }, [result])
+
+  // Derive display segments from current editable point order
+  const displaySegments = useMemo(() => {
+    if (editablePoints.length < 2) return []
+    return editablePoints.slice(0, -1).map((from, i) => {
+      const to = editablePoints[i + 1]
+      const existing = originalSegMap.get(segKey(from, to))
+      return {
+        from,
+        to,
+        distanceKm: existing?.distanceKm ?? null,
+        durationMin: existing?.durationMin ?? null,
+        approxKm: existing ? null : haversineKm(from, to),
+      }
+    })
+  }, [editablePoints, originalSegMap])
+
+  const totalDistKm = displaySegments.reduce((s, seg) => s + (seg.distanceKm ?? seg.approxKm ?? 0), 0)
+  const totalDurMin = displaySegments.reduce((s, seg) => s + (seg.durationMin ?? 0), 0)
+  const hasApprox = displaySegments.some(s => s.approxKm !== null)
+
+  const isReordered = result !== null && editablePoints.length > 0 &&
+    editablePoints.some((p, i) => p !== result.orderedPoints[i])
+
+  const mapCenter: [number, number] = editablePoints[0]
+    ? [editablePoints[0].lat, editablePoints[0].lon]
     : start.point ? [start.point.lat, start.point.lon] : [50.08, 14.43]
 
-  const polyline: [number, number][] = result?.orderedPoints.map(p => [p.lat, p.lon]) ?? []
+  const polyline: [number, number][] = editablePoints.map(p => [p.lat, p.lon])
 
   const mapCursorClass = mapClickTarget !== null ? 'cursor-crosshair' : ''
 
@@ -188,37 +273,83 @@ export default function RoutesPage() {
             <MapContainer center={mapCenter} zoom={11} style={{ height: '100%', width: '100%' }}>
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <MapClickHandler target={mapClickTarget} onPlace={handleMapPlace} />
-              {(result?.orderedPoints ?? [start.point, ...waypoints.map(w => w.point), end.point].filter(Boolean) as RoutePoint[]).map((p, i) => (
+              {(editablePoints.length > 0
+                ? editablePoints
+                : [start.point, ...waypoints.map(w => w.point), end.point].filter(Boolean) as RoutePoint[]
+              ).map((p, i) => (
                 <Marker key={i} position={[p.lat, p.lon]}>
-                  <Popup>{i === 0 ? 'Start: ' : i === (result?.orderedPoints.length ?? 0) - 1 && end.point ? 'Konec: ' : `${i}. `}{p.name}</Popup>
+                  <Popup>{i === 0 ? 'Start: ' : `${i}. `}{p.name}</Popup>
                 </Marker>
               ))}
               {polyline.length > 1 && <Polyline positions={polyline} color="blue" weight={3} />}
             </MapContainer>
           </div>
 
-          {result && (
+          {result && editablePoints.length > 0 && (
             <div className="bg-white rounded shadow p-4 text-sm">
               <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold">
-                  Trasa: {result.totalDistanceKm.toFixed(1)} km · {Math.round(result.totalDurationMin)} min
-                </span>
+                <div>
+                  <span className="font-semibold">
+                    Trasa: {totalDistKm.toFixed(1)} km{totalDurMin > 0 ? ` · ${Math.round(totalDurMin)} min` : ''}
+                  </span>
+                  {hasApprox && (
+                    <span className="ml-2 text-xs text-amber-600">* přibližné vzdálenosti po ruční úpravě</span>
+                  )}
+                </div>
                 <div className="flex gap-2">
-                  <a href={googleLink(result.orderedPoints)} target="_blank" rel="noopener noreferrer"
+                  {isReordered && (
+                    <button
+                      onClick={() => setEditablePoints([...result.orderedPoints])}
+                      className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200"
+                    >
+                      Obnovit pořadí
+                    </button>
+                  )}
+                  <a href={googleLink(editablePoints)} target="_blank" rel="noopener noreferrer"
                     className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200">Google Maps</a>
-                  <a href={mapyCzLink(result.orderedPoints)} target="_blank" rel="noopener noreferrer"
+                  <a href={mapyCzLink(editablePoints)} target="_blank" rel="noopener noreferrer"
                     className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">Mapy.cz</a>
                 </div>
               </div>
+
+              {/* Draggable point order list */}
+              <div className="mb-3 border rounded overflow-hidden">
+                {/* Fixed start point */}
+                {editablePoints[0] && (
+                  <div className="flex items-center gap-2 px-3 py-2 border-b bg-green-50">
+                    <span className="text-xs font-bold w-5 shrink-0 text-green-600">S</span>
+                    <span className="flex-1 text-xs text-gray-700 truncate" title={editablePoints[0].name}>
+                      {editablePoints[0].name}
+                    </span>
+                  </div>
+                )}
+                {/* Sortable destinations */}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext
+                    items={editablePoints.slice(1).map((_, i) => String(i + 1))}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {editablePoints.slice(1).map((p, i) => (
+                      <SortablePointRow key={String(i + 1)} id={String(i + 1)} index={i + 1} point={p} />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+
+              {/* Segment details */}
               <ol className="space-y-2">
-                {result.segments.map((seg, i) => (
+                {displaySegments.map((seg, i) => (
                   <li key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <span className="font-medium">{i + 1}. </span>
                       <span className="text-gray-700">{seg.from.name}</span>
                       <span className="text-gray-400 mx-1">→</span>
                       <span className="text-gray-700">{seg.to.name}</span>
-                      <span className="text-gray-500 text-xs ml-2">{seg.distanceKm.toFixed(1)} km · {Math.round(seg.durationMin)} min</span>
+                      <span className="text-gray-500 text-xs ml-2">
+                        {seg.distanceKm !== null
+                          ? `${seg.distanceKm.toFixed(1)} km · ${Math.round(seg.durationMin!)} min`
+                          : `~${seg.approxKm!.toFixed(1)} km (vzdušná čára)`}
+                      </span>
                     </div>
                     <a href={wazeLink(seg.from, seg.to)} target="_blank" rel="noopener noreferrer"
                       className="px-2 py-1 bg-sky-100 text-sky-700 rounded text-xs hover:bg-sky-200 shrink-0 ml-2">Waze</a>
@@ -229,6 +360,34 @@ export default function RoutesPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function SortablePointRow({ id, index, point }: { id: string; index: number; point: RoutePoint }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  }
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 px-3 py-2 border-b last:border-0 bg-white"
+    >
+      <span className="text-xs font-bold w-5 shrink-0 text-gray-400">{index}</span>
+      <span className="flex-1 text-xs text-gray-700 truncate" title={point.name}>{point.name}</span>
+      <button
+        {...attributes}
+        {...listeners}
+        className="shrink-0 px-2 py-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none"
+        title="Přetáhnout"
+      >
+        ⠿
+      </button>
     </div>
   )
 }
