@@ -39,38 +39,60 @@ export default function VydajePage() {
   const hasFilter = search || minCastka || maxCastka || dateFrom || dateTo
   const clearFilter = () => { setSearch(''); setMinCastka(''); setMaxCastka(''); setDateFrom(''); setDateTo('') }
 
+  const [showFilter, setShowFilter] = useState(false)
+
+  const FilterContent = () => (
+    <div className="space-y-3 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-gray-700">Filtry</span>
+        {hasFilter && <button onClick={clearFilter} className="text-xs text-gray-400 hover:text-red-500">Zrušit</button>}
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Hledat název</label>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Hledat..." className="w-full border rounded px-2 py-1" />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Datum od</label>
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-full border rounded px-2 py-1" />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Datum do</label>
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-full border rounded px-2 py-1" />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Částka od (Kč)</label>
+        <input type="number" value={minCastka} onChange={e => setMinCastka(e.target.value)} className="w-full border rounded px-2 py-1" />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Částka do (Kč)</label>
+        <input type="number" value={maxCastka} onChange={e => setMaxCastka(e.target.value)} className="w-full border rounded px-2 py-1" />
+      </div>
+    </div>
+  )
+
   if (isLoading) return <div className="p-4">Načítání...</div>
 
   return (
     <div className="flex gap-4 items-start">
-      <div className="w-60 shrink-0">
-        <div className="bg-white rounded shadow p-4 sticky top-4 space-y-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-700">Filtry</span>
-            {hasFilter && <button onClick={clearFilter} className="text-xs text-gray-400 hover:text-red-500">Zrušit</button>}
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Hledat název</label>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Hledat..." className="w-full border rounded px-2 py-1" />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Datum od</label>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-full border rounded px-2 py-1" />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Datum do</label>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-full border rounded px-2 py-1" />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Částka od (Kč)</label>
-            <input type="number" value={minCastka} onChange={e => setMinCastka(e.target.value)} className="w-full border rounded px-2 py-1" />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Částka do (Kč)</label>
-            <input type="number" value={maxCastka} onChange={e => setMaxCastka(e.target.value)} className="w-full border rounded px-2 py-1" />
-          </div>
+      {/* Desktop sidebar */}
+      <div className="hidden md:block w-60 shrink-0">
+        <div className="bg-white rounded shadow p-4 sticky top-4">
+          <FilterContent />
         </div>
       </div>
+
+      {/* Mobile filter overlay */}
+      {showFilter && (
+        <div className="fixed inset-0 z-50 flex items-end md:hidden" onClick={() => setShowFilter(false)}>
+          <div className="w-full bg-white rounded-t-2xl shadow-xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-semibold">Filtry</span>
+              <button onClick={() => setShowFilter(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            <FilterContent />
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-4">
@@ -81,9 +103,17 @@ export default function VydajePage() {
               {hasFilter && <span className="ml-2 text-gray-400">({filtered.length} / {vydaje.length})</span>}
             </p>
           </div>
-          <button onClick={() => setEditing(empty())} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
-            + Přidat
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowFilter(v => !v)}
+              className={`md:hidden px-3 py-2 rounded text-sm border ${hasFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
+            >
+              {hasFilter ? '🔍●' : '🔍'}
+            </button>
+            <button onClick={() => setEditing(empty())} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
+              + <span className="hidden sm:inline">Přidat</span>
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded shadow overflow-auto">

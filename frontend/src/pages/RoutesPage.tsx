@@ -216,8 +216,8 @@ export default function RoutesPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="col-span-1 space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="md:col-span-1 space-y-3">
           <AddressField
             label="Start"
             entry={start}
@@ -268,7 +268,7 @@ export default function RoutesPage() {
           </button>
         </div>
 
-        <div className="col-span-2">
+        <div className="md:col-span-2">
           <div className={`h-96 rounded overflow-hidden shadow mb-3 ${mapCursorClass}`}>
             <MapContainer center={mapCenter} zoom={11} style={{ height: '100%', width: '100%' }}>
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

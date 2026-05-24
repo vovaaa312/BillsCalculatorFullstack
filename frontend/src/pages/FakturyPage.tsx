@@ -44,15 +44,31 @@ export default function FakturyPage() {
     return s
   })
 
+  const [showFilter, setShowFilter] = useState(false)
   const totalCelkem = faktury.reduce((s, f) => s + (f.soucetKcCelkem ?? f.castka ?? 0), 0)
+  const hasFilter = Object.values(filter).some(Boolean)
 
   if (isLoading) return <div className="p-4">Načítání...</div>
 
   return (
     <div className="flex gap-4 items-start">
-      <div className="w-60 shrink-0">
+      {/* Desktop sidebar filter */}
+      <div className="hidden md:block w-60 shrink-0">
         <FilterPanel filter={filter} onChange={setFilter} onClear={() => setFilter({})} />
       </div>
+
+      {/* Mobile filter overlay */}
+      {showFilter && (
+        <div className="fixed inset-0 z-50 flex items-end md:hidden" onClick={() => setShowFilter(false)}>
+          <div className="w-full bg-white rounded-t-2xl shadow-xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-semibold">Filtry</span>
+              <button onClick={() => setShowFilter(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            <FilterPanel filter={filter} onChange={f => { setFilter(f) }} onClear={() => { setFilter({}); setShowFilter(false) }} />
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 min-w-0">
       <div className="flex items-center justify-between mb-4">
@@ -61,13 +77,19 @@ export default function FakturyPage() {
           <p className="text-sm text-gray-500 mt-1">Celkem: {totalCelkem.toFixed(2)} Kč</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowFilter(v => !v)}
+            className={`md:hidden px-3 py-2 rounded text-sm border ${hasFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
+          >
+            {hasFilter ? '🔍 Filtry ●' : '🔍 Filtry'}
+          </button>
           <label className="cursor-pointer bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700">
-            {importMut.isPending ? 'Importuji...' : 'Importovat PDF'}
+            {importMut.isPending ? '...' : <span className="hidden sm:inline">Importovat </span>}PDF
             <input type="file" accept=".pdf" className="hidden" disabled={importMut.isPending}
               onChange={e => { if (e.target.files?.[0]) importMut.mutate(e.target.files[0]); e.target.value = '' }} />
           </label>
           <button onClick={() => setEditing(emptyFaktura())} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
-            + Přidat
+            + <span className="hidden sm:inline">Přidat</span>
           </button>
         </div>
       </div>
