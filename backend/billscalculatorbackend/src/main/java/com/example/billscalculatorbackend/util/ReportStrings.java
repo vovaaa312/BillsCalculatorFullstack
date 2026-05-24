@@ -1,0 +1,43 @@
+package com.example.billscalculatorbackend.util;
+
+public interface ReportStrings {
+    String reportTitle();
+    String labelFaktury();
+    String labelPlatbyPrevodem();
+    String labelNesplneneFaktury();
+    String labelHotovost();
+    String labelDriver();
+    String labelVydaje();
+    String labelPoctyPolozek();
+    String labelKc();
+    String colOdberatel();
+    String colCastka();
+    String colDriver();
+    String colStart();
+    String colEnd();
+    String colHours();
+    String colKm();
+    String colNominal();
+    String colPocet();
+    String footCelkemFaktur();
+    String footCelkemPrevodem();
+    String footOcekHotov();
+    String footCelkemNesplnene();
+    String footCelkemSmen();
+    String footCelkemMzda();
+    String footCelkemVydaje();
+    String footCelkemHotovosti();
+    String footCelkemPolozek();
+    String countFaktur();
+    String countPrevodem();
+    String countNespl();
+    String countVydaju();
+    String rowDrobne();
+    String ocekPokladne();
+    String skutPokladne();
+    String totalLabel();
+    String rozdilLabel();
+    String prebytek();
+    String schodek();
+    String souhlasi();
+}

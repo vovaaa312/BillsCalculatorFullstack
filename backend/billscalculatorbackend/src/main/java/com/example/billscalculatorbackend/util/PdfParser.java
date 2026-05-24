@@ -1,0 +1,171 @@
+package com.example.billscalculatorbackend.util;
+
+import com.example.billscalculatorbackend.model.Faktura;
+import com.example.billscalculatorbackend.model.Polozka;
+import com.example.billscalculatorbackend.model.StatusFaktury;
+import com.example.billscalculatorbackend.model.TypPlatby;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class PdfParser {
+
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    public static Faktura parse(String text) {
+        return buildFaktura(text);
+    }
+
+    private static Faktura buildFaktura(String text) {
+        Faktura f = new Faktura();
+        f.setNazev(extractNazev(text));
+        f.setTypPlatby(extractTyp(text));
+        f.setStatus(StatusFaktury.NESPLNENA);
+        f.setDatum(extractDatum(text));
+        List<Polozka> items = extractPolozky(text);
+        f.getPolozky().addAll(items);
+        int total = extractCastka(text);
+        if (total > 0) f.setCastka(total);
+        else f.recomputeCastkaFromPolozky();
+        return f;
+    }
+
+    private static String extractNazev(String text) {
+        Matcher m = Pattern.compile("objedn[aá]vky\\s*:\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE).matcher(text);
+        if (m.find()) { String name = m.group(1).trim(); if (!name.isEmpty()) return name; }
+        return "Neznamy odberatel";
+    }
+
+    private static int extractCastka(String text) {
+        Matcher m = Pattern.compile("CELKEM\\s+K\\s+[ÚU]HRAD[EĚ][^\\d]*?([\\d\\s\\u00a0]+[,.]\\d{2})",
+                Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(text);
+        if (m.find()) return parseAmount(m.group(1));
+        Matcher m2 = Pattern.compile("Sou[čc]et\\s+polo[žz]ek[^\\d]*?(\\d[\\d\\s\\u00a0]*[,.]\\d{2})",
+                Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(text);
+        if (m2.find()) return parseAmount(m2.group(1));
+        return 0;
+    }
+
+    private static TypPlatby extractTyp(String text) {
+        Matcher m = Pattern.compile("Forma\\s+[úu]hrady[\\s:]*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE).matcher(text);
+        if (m.find()) {
+            String forma = m.group(1).trim().toLowerCase();
+            if (forma.contains("hotov")) return TypPlatby.HOTOVOST;
+            if (forma.contains("převod") || forma.contains("prevod") || forma.contains("bank")) return TypPlatby.PREVOD;
+        }
+        if (text.toLowerCase().contains("uhrazeno hotov")) return TypPlatby.HOTOVOST;
+        return TypPlatby.PREVOD;
+    }
+
+    private static LocalDate extractDatum(String text) {
+        Matcher m = Pattern.compile("Datum\\s+vystaven[ií][\\s:]*(\\d{2}\\.\\d{2}\\.\\d{4})").matcher(text);
+        if (m.find()) { try { return LocalDate.parse(m.group(1), DATE_FMT); } catch (Exception ignored) {} }
+        Matcher m2 = Pattern.compile("(\\d{2}\\.\\d{2}\\.\\d{4})").matcher(text);
+        if (m2.find()) { try { return LocalDate.parse(m2.group(1), DATE_FMT); } catch (Exception ignored) {} }
+        return LocalDate.now();
+    }
+
+    private static List<Polozka> extractPolozky(String text) {
+        List<Polozka> inline = extractPolozkyInline(text);
+        if (!inline.isEmpty()) return inline;
+        return extractPolozkyColumnar(text);
+    }
+
+    private static List<Polozka> extractPolozkyInline(String text) {
+        List<Polozka> out = new ArrayList<>();
+        String[] lines = text.split("\\r?\\n");
+        boolean inSection = false;
+        String num = "(\\d{1,3}(?:[\\s\\u00a0]\\d{3})*[,.]\\d{2})";
+        Pattern itemPat = Pattern.compile("^(.+?)\\s+(\\d+)\\s+ks\\s+" + num + "\\s+" + num + "(?:\\s+\\d+(?:[,.]\\d+)?\\s*%)?\\s+" + num + "\\s+(\\d+)\\s*%\\s+" + num + "\\s+" + num + "\\s*$");
+        for (String raw : lines) {
+            String line = raw.trim();
+            if (line.isEmpty()) continue;
+            if (!inSection) { if (containsCi(line,"Označení dodávky")||containsCi(line,"Oznaceni dodavky")) inSection=true; continue; }
+            if (containsCi(line,"Součet položek")||containsCi(line,"Soucet polozek")||containsCi(line,"CELKEM K")||containsCi(line,"Rekapitulace DPH")) break;
+            Matcher m = itemPat.matcher(line);
+            if (!m.matches()) continue;
+            String name = m.group(1).trim();
+            int colon = name.lastIndexOf(':');
+            if (colon >= 0 && colon < name.length()-1) name = name.substring(colon+1).trim();
+            try {
+                out.add(new Polozka(name, Integer.parseInt(m.group(2)), parseDouble(m.group(3)), parseDouble(m.group(4)), parseDouble(m.group(5)), Integer.parseInt(m.group(6)), parseDouble(m.group(7)), parseDouble(m.group(8))));
+            } catch (NumberFormatException ignored) {}
+        }
+        return out;
+    }
+
+    private static List<Polozka> extractPolozkyColumnar(String text) {
+        List<Polozka> out = new ArrayList<>();
+        String[] lines = text.split("\\r?\\n");
+        boolean inNamesSection = false;
+        List<String> names = new ArrayList<>();
+        for (String raw : lines) {
+            String line = raw.trim();
+            if (line.isEmpty()) continue;
+            if (!inNamesSection) { if (containsCi(line,"Označení dodávky")||containsCi(line,"Oznaceni dodavky")) inNamesSection=true; continue; }
+            if (containsCi(line,"Součet položek")||containsCi(line,"Soucet polozek")||containsCi(line,"CELKEM K")||containsCi(line,"Rekapitulace DPH")) break;
+            if (line.length()<3||line.matches("\\d.*")||line.matches("[A-Z]{2,}\\d.*")) continue;
+            if (containsCi(line,"IČ:")||containsCi(line,"DIČ:")||line.contains("http")||line.contains("www")||line.contains("/")) continue;
+            if (line.matches(".*\\d{3}\\s+\\d{2}.*")||!line.matches(".*[a-zA-ZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ].*")) continue;
+            String ll = line.toLowerCase();
+            if (ll.contains("s.r.o")||ll.contains(" a.s")||ll.contains("republika")||ll.contains("czech")) continue;
+            names.add(line);
+        }
+        if (names.isEmpty()) return out;
+        Pattern qtyPat=Pattern.compile("^(\\d+)\\s*ks$",Pattern.CASE_INSENSITIVE);
+        Pattern pricePat=Pattern.compile("^([|\\d][|\\d\\s\\u00a0]*[,.]\\d{2})\\s*$");
+        Pattern dphPct=Pattern.compile("^(\\d{1,2})\\s*%$");
+        List<Integer> qtys=new ArrayList<>(); List<Double> jcenas=new ArrayList<>(),jcenaBezDphs=new ArrayList<>(),totals=new ArrayList<>(); List<Integer> dphs=new ArrayList<>();
+        ColState state=ColState.NAMES;
+        boolean seenJ=false,seenJBez=false,seenCP=false,seenDA=false,seenT=false,stopT=false;
+        for (String raw:lines) {
+            String line=raw.trim(); if (line.isEmpty()) continue;
+            if (containsCi(line,"Celkem s DPH")) break;
+            if (containsCi(line,"Základ v Kč")||containsCi(line,"Sazba")||containsCi(line,"DPH v Kč")||containsCi(line,"Rekapitulace DPH")) continue;
+            if (!seenT&&containsCi(line,"Kč Celkem")) { state=ColState.TOTALS; seenT=true; continue; }
+            if (!seenCP&&containsCi(line,"Cena")&&containsCi(line,"%DPH")) { state=ColState.CENA_PCT; seenCP=true; continue; }
+            if (!seenJBez&&(containsCi(line,"bez DPH")||containsCi(line,"J.cena bez"))) { state=ColState.JCENA_BEZ_DPH; seenJBez=true; continue; }
+            if (!seenJ&&line.replaceAll("\\s","").equalsIgnoreCase("J.cena")) { state=ColState.JCENA; seenJ=true; continue; }
+            if (!seenDA&&line.equalsIgnoreCase("DPH")) { state=ColState.DPH_AMT; seenDA=true; continue; }
+            if (containsCi(line,"Množství")) { state=ColState.NAMES; continue; }
+            if (state==ColState.TOTALS&&(containsCi(line,"Součet")||containsCi(line,"CELKEM"))) { stopT=true; continue; }
+            Matcher qm=qtyPat.matcher(line),pm=pricePat.matcher(line),dm=dphPct.matcher(line);
+            if (qm.matches()) { qtys.add(Integer.parseInt(qm.group(1))); continue; }
+            if (pm.matches()) {
+                double val=parseDouble(pm.group(1));
+                switch(state) {
+                    case JCENA: if(jcenas.size()<names.size()) jcenas.add(val); break;
+                    case JCENA_BEZ_DPH: if(jcenaBezDphs.size()<names.size()) jcenaBezDphs.add(val); break;
+                    case CENA_PCT: if(jcenas.size()<names.size()) jcenas.add(val); break;
+                    case TOTALS: if(!stopT&&totals.size()<names.size()) totals.add(val); break;
+                    default: break;
+                }
+                continue;
+            }
+            if (dm.matches()&&state==ColState.CENA_PCT&&dphs.size()<names.size()) dphs.add(Integer.parseInt(dm.group(1)));
+        }
+        for (int i=0;i<names.size();i++) {
+            int qty=i<qtys.size()?qtys.get(i):1;
+            double jcena=i<jcenas.size()?jcenas.get(i):0;
+            double jcenaBezDph=i<jcenaBezDphs.size()?jcenaBezDphs.get(i):0;
+            int dphPct2=i<dphs.size()?dphs.get(i):12;
+            double total2=i<totals.size()?totals.get(i):jcena*qty;
+            out.add(new Polozka(names.get(i),qty,jcena,jcenaBezDph,jcena,dphPct2,jcena-jcenaBezDph,total2));
+        }
+        return out;
+    }
+
+    private enum ColState { NAMES, JCENA, JCENA_BEZ_DPH, CENA_PCT, DPH_AMT, TOTALS }
+
+    private static boolean containsCi(String h, String n) { return h.toLowerCase().contains(n.toLowerCase()); }
+    private static int parseAmount(String s) { return (int) Math.round(parseDouble(s)); }
+    private static double parseDouble(String s) {
+        if (s==null) return 0;
+        String clean=s.trim().replaceAll("^\\|","1").replaceAll("[\\s\\u00a0]","").replace(',','.');
+        try { return Double.parseDouble(clean); } catch (NumberFormatException e) { return 0; }
+    }
+}

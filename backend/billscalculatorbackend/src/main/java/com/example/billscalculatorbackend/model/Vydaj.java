@@ -1,0 +1,34 @@
+package com.example.billscalculatorbackend.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "vydaje")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Vydaj {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
+
+    @Column(nullable = false)
+    private String nazev;
+
+    private int castka;
+
+    public Vydaj(String nazev, int castka) {
+        this.nazev = nazev;
+        this.castka = castka;
+    }
+}
