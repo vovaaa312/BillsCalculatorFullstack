@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { fmtDate } from '../utils/date'
+import { useSortable } from '../hooks/useSortable'
+import SortableTh from '../components/SortableTh'
 import { getInvoices, createInvoice, updateInvoice, deleteInvoice, importInvoicesPdf } from '../api/faktury'
 import type { Invoice, InvoiceItem, InvoiceFilter, PaymentType, InvoiceStatus } from '../types/faktura'
 import Modal from '../components/Modal'
@@ -51,6 +54,7 @@ export default function FakturyPage() {
     return s
   })
 
+  const { sorted, sortKey, dir, sortBy } = useSortable(invoices, 'date', 'desc')
   const [showFilter, setShowFilter] = useState(false)
   const totalAmount = invoices.reduce((s, f) => s + (f.totalPrice ?? f.amount ?? 0), 0)
   const hasFilter = Object.values(filter).some(Boolean)
@@ -105,18 +109,18 @@ export default function FakturyPage() {
             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase">
               <tr>
                 <th className="px-3 py-2 w-6"></th>
-                <th className="px-3 py-2 text-left">{t('invoice.colDate')}</th>
-                <th className="px-3 py-2 text-left">{t('invoice.colClient')}</th>
-                <th className="px-3 py-2 text-right">{t('invoice.colBase')}</th>
-                <th className="px-3 py-2 text-right">{t('invoice.colVat')}</th>
-                <th className="px-3 py-2 text-right">{t('invoice.colTotal')}</th>
-                <th className="px-3 py-2 text-left">{t('invoice.colPayment')}</th>
-                <th className="px-3 py-2 text-left">{t('invoice.colStatus')}</th>
+                <SortableTh label={t('invoice.colDate')}    colKey="date"             sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-3 py-2 text-left" />
+                <SortableTh label={t('invoice.colClient')}  colKey="name"             sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-3 py-2 text-left" />
+                <SortableTh label={t('invoice.colBase')}    colKey="totalPriceNoVat"  sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-3 py-2 text-right" />
+                <SortableTh label={t('invoice.colVat')}     colKey="totalVat"         sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-3 py-2 text-right" />
+                <SortableTh label={t('invoice.colTotal')}   colKey="totalPrice"       sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-3 py-2 text-right" />
+                <SortableTh label={t('invoice.colPayment')} colKey="paymentType"      sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-3 py-2 text-left" />
+                <SortableTh label={t('invoice.colStatus')}  colKey="status"           sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-3 py-2 text-left" />
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody>
-              {invoices.map(f => {
+              {sorted.map(f => {
                 const isOpen = f.id != null && expanded.has(f.id)
                 const vat = f.totalVat ?? 0
                 const total = f.totalPrice ?? f.amount ?? 0
@@ -124,7 +128,7 @@ export default function FakturyPage() {
                 return [
                   <tr key={f.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-100 cursor-pointer" onClick={() => f.id && toggleExpand(f.id)}>
                     <td className="px-3 py-2 text-gray-400 dark:text-gray-500 text-xs">{f.items?.length > 0 ? (isOpen ? '▼' : '▶') : ''}</td>
-                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{f.date}</td>
+                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{fmtDate(f.date)}</td>
                     <td className="px-3 py-2 font-medium">{f.name || '—'}</td>
                     <td className="px-3 py-2 text-right">{base.toFixed(2)}</td>
                     <td className="px-3 py-2 text-right">{vat.toFixed(2)}</td>

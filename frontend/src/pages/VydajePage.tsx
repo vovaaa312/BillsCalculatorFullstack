@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { fmtDate } from '../utils/date'
+import { useSortable } from '../hooks/useSortable'
+import SortableTh from '../components/SortableTh'
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/vydaje'
 import type { Expense } from '../types/vydaj'
 import Modal from '../components/Modal'
@@ -37,6 +40,7 @@ export default function VydajePage() {
     return true
   }), [expenses, search, minAmount, maxAmount, dateFrom, dateTo])
 
+  const { sorted, sortKey, dir, sortBy } = useSortable(filtered, 'date', 'desc')
   const total = filtered.reduce((s, v) => s + (Number(v.amount) || 0), 0)
   const hasFilter = search || minAmount || maxAmount || dateFrom || dateTo
   const clearFilter = () => { setSearch(''); setMinAmount(''); setMaxAmount(''); setDateFrom(''); setDateTo('') }
@@ -94,16 +98,16 @@ export default function VydajePage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase">
               <tr>
-                <th className="px-4 py-2 text-left">{t('expense.colDate')}</th>
-                <th className="px-4 py-2 text-left">{t('expense.colName')}</th>
-                <th className="px-4 py-2 text-right">{t('expense.colAmount')}</th>
+                <SortableTh label={t('expense.colDate')}   colKey="date"   sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-left" />
+                <SortableTh label={t('expense.colName')}   colKey="name"   sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-left" />
+                <SortableTh label={t('expense.colAmount')} colKey="amount" sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-right" />
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(v => (
+              {sorted.map(v => (
                 <tr key={v.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-100">
-                  <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{v.date ?? '—'}</td>
+                  <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{fmtDate(v.date)}</td>
                   <td className="px-4 py-2">{v.name}</td>
                   <td className="px-4 py-2 text-right font-semibold">{(Number(v.amount) || 0).toFixed(2)} {t('common.currency')}</td>
                   <td className="px-4 py-2">
