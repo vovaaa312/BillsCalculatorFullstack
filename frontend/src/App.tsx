@@ -6,6 +6,8 @@ import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import FakturyPage from './pages/FakturyPage'
 import VydajePage from './pages/VydajePage'
 import HotovostPage from './pages/HotovostPage'
@@ -37,6 +39,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={token ? <Navigate to="/faktury" replace /> : <LoginPage />} />
       <Route path="/register" element={token ? <Navigate to="/faktury" replace /> : <RegisterPage />} />
+      <Route path="/:lang/register" element={token ? <Navigate to="/faktury" replace /> : <RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/faktury" element={<FakturyPage />} />
         <Route path="/vydaje" element={<VydajePage />} />
