@@ -22,6 +22,13 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(20) default 'USER'")
+    private Role role = Role.USER;
+
+    @Column(columnDefinition = "boolean default true")
+    private boolean enabled = true;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 }

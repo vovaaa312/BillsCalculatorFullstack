@@ -2,7 +2,7 @@ import client from './client'
 
 export interface LoginRequest { email: string; password: string }
 export interface RegisterRequest { email: string; password: string }
-export interface AuthResponse { token: string }
+export interface AuthResponse { token: string; email: string; role: string }
 
 export const login = (data: LoginRequest) =>
   client.post<AuthResponse>('/auth/login', data).then(r => r.data)

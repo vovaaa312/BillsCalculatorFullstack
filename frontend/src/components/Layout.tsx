@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import Sidebar from './Sidebar'
 
 const LANGS = ['cs', 'en', 'ru', 'ua']
@@ -12,6 +13,7 @@ export default function Layout() {
   const { pathname } = useLocation()
   const { t, i18n } = useTranslation()
   const { theme, toggleTheme } = useTheme()
+  const { isAdmin } = useAuth()
 
   const links = [
     { to: '/faktury',  label: t('nav.invoices'), icon: '🧾' },
@@ -23,7 +25,13 @@ export default function Layout() {
     { to: '/io',       label: t('nav.io'),         icon: '📂' },
   ]
 
-  const active = links.find(l => pathname.startsWith(l.to))
+  const allTitles = [
+    ...links,
+    { to: '/profile', label: t('nav.profile'), icon: '👤' },
+    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin'), icon: '🛡️' }] : []),
+  ]
+
+  const active = allTitles.find(l => pathname.startsWith(l.to))
   const title = active?.label ?? 'Bills Calculator'
 
   const cycleLang = () => {

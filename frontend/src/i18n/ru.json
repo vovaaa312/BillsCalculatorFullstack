@@ -9,7 +9,9 @@
     "io": "И/Э",
     "logout": "Выйти",
     "themeDark": "Тёмная тема",
-    "themeLight": "Светлая тема"
+    "themeLight": "Светлая тема",
+    "admin": "Админ",
+    "profile": "Профиль"
   },
   "invoice": {
     "title": "Счета",
@@ -162,13 +164,53 @@
     "filters": "Фильтры",
     "search": "Поиск...",
     "currency": "CZK",
-    "records": "записей"
+    "records": "записей",
+    "noResults": "Нет результатов"
   },
   "auth": {
     "login": "Войти",
     "register": "Зарегистрироваться",
     "email": "E-mail",
     "password": "Пароль",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "noAccount": "Нет аккаунта?",
+    "invalidCredentials": "Неверный email или пароль",
+    "accountDisabled": "Аккаунт деактивирован. Обратитесь к администратору."
+  },
+  "admin": {
+    "title": "Управление пользователями",
+    "backup": "Скачать резервную копию",
+    "users": "Пользователи",
+    "pendingRequests": "Заявки на регистрацию",
+    "approve": "Одобрить",
+    "reject": "Отклонить",
+    "colEmail": "Email",
+    "colRole": "Роль",
+    "colStatus": "Статус",
+    "colCreated": "Создан",
+    "statusActive": "Активен",
+    "statusDisabled": "Отключён",
+    "enable": "Включить",
+    "disable": "Отключить",
+    "deleteConfirm": "Удалить пользователя?",
+    "filterRoleAll": "Все роли",
+    "filterStatusAll": "Все статусы"
+  },
+  "profile": {
+    "title": "Профиль",
+    "info": "Информация об аккаунте",
+    "email": "Email",
+    "role": "Роль",
+    "since": "Дата регистрации",
+    "changePassword": "Сменить пароль",
+    "oldPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "confirmPassword": "Подтвердить пароль",
+    "save": "Сохранить пароль",
+    "passwordChanged": "Пароль изменён.",
+    "passwordError": "Ошибка при смене пароля.",
+    "passwordMismatch": "Пароли не совпадают.",
+    "passwordTooShort": "Минимум 6 символов.",
+    "danger": "Выход"
   }
 }

@@ -9,7 +9,9 @@
     "io": "I/E",
     "logout": "Odhlásit",
     "themeDark": "Tmavý režim",
-    "themeLight": "Světlý režim"
+    "themeLight": "Světlý režim",
+    "admin": "Správa",
+    "profile": "Profil"
   },
   "invoice": {
     "title": "Faktury",
@@ -162,13 +164,53 @@
     "filters": "Filtry",
     "search": "Hledat...",
     "currency": "Kč",
-    "records": "záznamů"
+    "records": "záznamů",
+    "noResults": "Žádné výsledky"
+  },
+  "admin": {
+    "title": "Správa uživatelů",
+    "backup": "Stáhnout zálohu",
+    "users": "Uživatelé",
+    "pendingRequests": "Žádosti o registraci",
+    "approve": "Schválit",
+    "reject": "Odmítnout",
+    "colEmail": "Email",
+    "colRole": "Role",
+    "colStatus": "Stav",
+    "colCreated": "Vytvořeno",
+    "statusActive": "Aktivní",
+    "statusDisabled": "Zakázán",
+    "enable": "Aktivovat",
+    "disable": "Deaktivovat",
+    "deleteConfirm": "Opravdu smazat tohoto uživatele?",
+    "filterRoleAll": "Všechny role",
+    "filterStatusAll": "Všechny stavy"
+  },
+  "profile": {
+    "title": "Profil",
+    "info": "Informace o účtu",
+    "email": "Email",
+    "role": "Role",
+    "since": "Účet vytvořen",
+    "changePassword": "Změna hesla",
+    "oldPassword": "Aktuální heslo",
+    "newPassword": "Nové heslo",
+    "confirmPassword": "Potvrdit nové heslo",
+    "save": "Uložit heslo",
+    "passwordChanged": "Heslo bylo změněno.",
+    "passwordError": "Chyba při změně hesla.",
+    "passwordMismatch": "Hesla se neshodují.",
+    "passwordTooShort": "Heslo musí mít alespoň 6 znaků.",
+    "danger": "Odhlášení"
   },
   "auth": {
     "login": "Přihlásit se",
     "register": "Registrovat",
     "email": "E-mail",
     "password": "Heslo",
-    "logout": "Odhlásit"
+    "logout": "Odhlásit",
+    "noAccount": "Nemáte účet?",
+    "invalidCredentials": "Neplatné přihlašovací údaje",
+    "accountDisabled": "Účet byl deaktivován. Kontaktujte správce."
   }
 }

@@ -15,7 +15,7 @@ const LANGS = [
 ]
 
 export default function Sidebar({ onClose }: Props) {
-  const { logout } = useAuth()
+  const { logout, isAdmin } = useAuth()
   const { t, i18n } = useTranslation()
   const { theme, toggleTheme } = useTheme()
 
@@ -27,6 +27,8 @@ export default function Sidebar({ onClose }: Props) {
     { to: '/routes',   label: t('nav.routes'),     icon: '🗺️' },
     { to: '/report',   label: t('nav.report'),     icon: '📊' },
     { to: '/io',       label: t('nav.io'),         icon: '📂' },
+    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin'), icon: '🛡️' }] : []),
+    { to: '/profile',  label: t('nav.profile'),    icon: '👤' },
   ]
 
   const changeLang = (lang: string) => {
