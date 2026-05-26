@@ -9,3 +9,12 @@ export const login = (data: LoginRequest) =>
 
 export const register = (data: RegisterRequest) =>
   client.post<AuthResponse>('/auth/register', data).then(r => r.data)
+
+export const googleLogin = (idToken: string) =>
+  client.post<AuthResponse>('/auth/google', { idToken }).then(r => r.data)
+
+export const forgotPassword = (email: string) =>
+  client.post('/auth/forgot-password', { email })
+
+export const resetPassword = (token: string, newPassword: string) =>
+  client.post('/auth/reset-password', { token, newPassword })
