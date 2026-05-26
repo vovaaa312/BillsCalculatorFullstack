@@ -27,10 +27,12 @@ public class ProfileController {
     @GetMapping("/me")
     public ResponseEntity<?> me() {
         User u = currentUser();
+        boolean hasPassword = u.getPassword() != null && !u.getPassword().isBlank();
         return ResponseEntity.ok(Map.of(
                 "email", u.getEmail(),
                 "role", u.getRole() != null ? u.getRole().name() : "USER",
-                "createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : ""
+                "createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "",
+                "hasPassword", hasPassword
         ));
     }
 
