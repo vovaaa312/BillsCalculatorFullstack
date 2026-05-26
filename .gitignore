@@ -16,3 +16,6 @@ Thumbs.db
 
 # Secrets
 .env
+
+# Private docs (credentials screenshots, etc.)
+docs/private/
