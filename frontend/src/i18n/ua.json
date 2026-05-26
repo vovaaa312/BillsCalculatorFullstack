@@ -9,7 +9,9 @@
     "io": "І/Е",
     "logout": "Вийти",
     "themeDark": "Темна тема",
-    "themeLight": "Світла тема"
+    "themeLight": "Світла тема",
+    "admin": "Адмін",
+    "profile": "Профіль"
   },
   "invoice": {
     "title": "Рахунки",
@@ -162,13 +164,53 @@
     "filters": "Фільтри",
     "search": "Пошук...",
     "currency": "CZK",
-    "records": "записів"
+    "records": "записів",
+    "noResults": "Немає результатів"
   },
   "auth": {
     "login": "Увійти",
     "register": "Зареєструватися",
     "email": "E-mail",
     "password": "Пароль",
-    "logout": "Вийти"
+    "logout": "Вийти",
+    "noAccount": "Немає акаунта?",
+    "invalidCredentials": "Невірний email або пароль",
+    "accountDisabled": "Акаунт деактивовано. Зверніться до адміністратора."
+  },
+  "admin": {
+    "title": "Управління користувачами",
+    "backup": "Завантажити резервну копію",
+    "users": "Користувачі",
+    "pendingRequests": "Заявки на реєстрацію",
+    "approve": "Схвалити",
+    "reject": "Відхилити",
+    "colEmail": "Email",
+    "colRole": "Роль",
+    "colStatus": "Статус",
+    "colCreated": "Створено",
+    "statusActive": "Активний",
+    "statusDisabled": "Вимкнений",
+    "enable": "Увімкнути",
+    "disable": "Вимкнути",
+    "deleteConfirm": "Видалити користувача?",
+    "filterRoleAll": "Всі ролі",
+    "filterStatusAll": "Всі статуси"
+  },
+  "profile": {
+    "title": "Профіль",
+    "info": "Інформація про акаунт",
+    "email": "Email",
+    "role": "Роль",
+    "since": "Дата реєстрації",
+    "changePassword": "Змінити пароль",
+    "oldPassword": "Поточний пароль",
+    "newPassword": "Новий пароль",
+    "confirmPassword": "Підтвердити пароль",
+    "save": "Зберегти пароль",
+    "passwordChanged": "Пароль змінено.",
+    "passwordError": "Помилка при зміні пароля.",
+    "passwordMismatch": "Паролі не збігаються.",
+    "passwordTooShort": "Мінімум 6 символів.",
+    "danger": "Вихід"
   }
 }

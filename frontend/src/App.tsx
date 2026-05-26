@@ -13,6 +13,8 @@ import DriverPage from './pages/DriverPage'
 import ReportPage from './pages/ReportPage'
 import RoutesPage from './pages/RoutesPage'
 import IoPage from './pages/IoPage'
+import AdminPage from './pages/AdminPage'
+import ProfilePage from './pages/ProfilePage'
 import type { ReactNode } from 'react'
 
 const qc = new QueryClient()
@@ -20,6 +22,13 @@ const qc = new QueryClient()
 function PrivateRoute({ children }: { children: ReactNode }) {
   const { token } = useAuth()
   return token ? <>{children}</> : <Navigate to="/login" replace />
+}
+
+function AdminRoute({ children }: { children: ReactNode }) {
+  const { token, isAdmin } = useAuth()
+  if (!token) return <Navigate to="/login" replace />
+  if (!isAdmin) return <Navigate to="/faktury" replace />
+  return <>{children}</>
 }
 
 function AppRoutes() {
@@ -36,6 +45,8 @@ function AppRoutes() {
         <Route path="/report" element={<ReportPage />} />
         <Route path="/routes" element={<RoutesPage />} />
         <Route path="/io" element={<IoPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/faktury" replace />} />
     </Routes>
