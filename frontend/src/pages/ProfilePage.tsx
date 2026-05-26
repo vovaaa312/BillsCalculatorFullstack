@@ -63,7 +63,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded shadow p-4 space-y-3">
+      {profile?.hasPassword && <div className="bg-white dark:bg-gray-800 rounded shadow p-4 space-y-3">
         <h2 className="font-semibold dark:text-gray-100">{t('profile.changePassword')}</h2>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('profile.oldPassword')}</label>
@@ -87,7 +87,7 @@ export default function ProfilePage() {
         >
           {saving ? t('common.loading') : t('profile.save')}
         </button>
-      </div>
+      </div>}
 
       <div className="bg-white dark:bg-gray-800 rounded shadow p-4">
         <h2 className="font-semibold text-red-600 dark:text-red-400 mb-2">{t('profile.danger')}</h2>

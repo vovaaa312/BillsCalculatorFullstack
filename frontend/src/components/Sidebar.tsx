@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../context/ThemeContext'
@@ -18,22 +18,26 @@ export default function Sidebar({ onClose }: Props) {
   const { logout, isAdmin } = useAuth()
   const { t, i18n } = useTranslation()
   const { theme, toggleTheme } = useTheme()
+  const { lang = 'en' } = useParams<{ lang: string }>()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
 
   const links = [
-    { to: '/faktury',  label: t('nav.invoices'), icon: '🧾' },
-    { to: '/vydaje',   label: t('nav.expenses'),  icon: '💸' },
-    { to: '/hotovost', label: t('nav.cash'),       icon: '💰' },
-    { to: '/driver',   label: t('nav.driver'),     icon: '🚗' },
-    { to: '/routes',   label: t('nav.routes'),     icon: '🗺️' },
-    { to: '/report',   label: t('nav.report'),     icon: '📊' },
-    { to: '/io',       label: t('nav.io'),         icon: '📂' },
-    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin'), icon: '🛡️' }] : []),
-    { to: '/profile',  label: t('nav.profile'),    icon: '👤' },
+    { to: `/${lang}/faktury`,  label: t('nav.invoices'), icon: '🧾' },
+    { to: `/${lang}/vydaje`,   label: t('nav.expenses'),  icon: '💸' },
+    { to: `/${lang}/hotovost`, label: t('nav.cash'),       icon: '💰' },
+    { to: `/${lang}/driver`,   label: t('nav.driver'),     icon: '🚗' },
+    { to: `/${lang}/routes`,   label: t('nav.routes'),     icon: '🗺️' },
+    { to: `/${lang}/report`,   label: t('nav.report'),     icon: '📊' },
+    { to: `/${lang}/io`,       label: t('nav.io'),         icon: '📂' },
+    ...(isAdmin ? [{ to: `/${lang}/admin`, label: t('nav.admin'), icon: '🛡️' }] : []),
+    { to: `/${lang}/profile`,  label: t('nav.profile'),    icon: '👤' },
   ]
 
-  const changeLang = (lang: string) => {
-    i18n.changeLanguage(lang)
-    localStorage.setItem('lang', lang)
+  const changeLang = (newLang: string) => {
+    i18n.changeLanguage(newLang)
+    localStorage.setItem('lang', newLang)
+    navigate(pathname.replace(`/${lang}/`, `/${newLang}/`))
   }
 
   return (

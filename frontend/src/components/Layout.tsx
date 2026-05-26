@@ -1,44 +1,47 @@
 import { useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import Sidebar from './Sidebar'
 
-const LANGS = ['cs', 'en', 'ru', 'ua']
+const LANG_CODES = ['cs', 'en', 'ru', 'ua']
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
+  const { lang = 'en' } = useParams<{ lang: string }>()
+  const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const { theme, toggleTheme } = useTheme()
   const { isAdmin } = useAuth()
 
   const links = [
-    { to: '/faktury',  label: t('nav.invoices'), icon: '🧾' },
-    { to: '/vydaje',   label: t('nav.expenses'),  icon: '💸' },
-    { to: '/hotovost', label: t('nav.cash'),       icon: '💰' },
-    { to: '/driver',   label: t('nav.driver'),     icon: '🚗' },
-    { to: '/routes',   label: t('nav.routes'),     icon: '🗺️' },
-    { to: '/report',   label: t('nav.report'),     icon: '📊' },
-    { to: '/io',       label: t('nav.io'),         icon: '📂' },
+    { to: `/${lang}/faktury`,  label: t('nav.invoices'), icon: '🧾' },
+    { to: `/${lang}/vydaje`,   label: t('nav.expenses'),  icon: '💸' },
+    { to: `/${lang}/hotovost`, label: t('nav.cash'),       icon: '💰' },
+    { to: `/${lang}/driver`,   label: t('nav.driver'),     icon: '🚗' },
+    { to: `/${lang}/routes`,   label: t('nav.routes'),     icon: '🗺️' },
+    { to: `/${lang}/report`,   label: t('nav.report'),     icon: '📊' },
+    { to: `/${lang}/io`,       label: t('nav.io'),         icon: '📂' },
   ]
 
   const allTitles = [
     ...links,
-    { to: '/profile', label: t('nav.profile'), icon: '👤' },
-    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin'), icon: '🛡️' }] : []),
+    { to: `/${lang}/profile`, label: t('nav.profile'), icon: '👤' },
+    ...(isAdmin ? [{ to: `/${lang}/admin`, label: t('nav.admin'), icon: '🛡️' }] : []),
   ]
 
-  const active = allTitles.find(l => pathname.startsWith(l.to))
+  const active = allTitles.find(l => pathname === l.to || pathname.startsWith(l.to + '/'))
   const title = active?.label ?? 'Bills Calculator'
 
   const cycleLang = () => {
-    const idx = LANGS.indexOf(i18n.language)
-    const next = LANGS[(idx + 1) % LANGS.length]
+    const idx = LANG_CODES.indexOf(i18n.language)
+    const next = LANG_CODES[(idx + 1) % LANG_CODES.length]
     i18n.changeLanguage(next)
     localStorage.setItem('lang', next)
+    navigate(pathname.replace(`/${lang}/`, `/${next}/`))
   }
 
   return (
