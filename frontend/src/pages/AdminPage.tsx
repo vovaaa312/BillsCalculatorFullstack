@@ -1,14 +1,18 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { fmtDate } from '../utils/date'
 import {
   getUsers, getPendingRequests, approveRequest, rejectRequest,
-  deleteUser, toggleUser, downloadBackup,
+  deleteUser, toggleUser, downloadBackup, restoreBackup,
 } from '../api/admin'
 
 export default function AdminPage() {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  const restoreInputRef = useRef<HTMLInputElement>(null)
+  const [restoreMsg, setRestoreMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [restoring, setRestoring] = useState(false)
 
   const [search, setSearch] = useState('')
   const [filterRole, setFilterRole] = useState<'ALL' | 'ADMIN' | 'USER'>('ALL')
@@ -27,6 +31,24 @@ export default function AdminPage() {
   const deleteMut = useMutation({ mutationFn: deleteUser, onSuccess: invalidate })
   const toggleMut = useMutation({ mutationFn: toggleUser, onSuccess: invalidate })
 
+  const handleRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    if (!confirm(t('admin.restoreConfirm'))) return
+    setRestoring(true)
+    setRestoreMsg(null)
+    try {
+      const result = await restoreBackup(file)
+      setRestoreMsg({ text: t('admin.restoreSuccess', result), ok: true })
+      invalidate()
+    } catch {
+      setRestoreMsg({ text: t('admin.restoreFail'), ok: false })
+    } finally {
+      setRestoring(false)
+    }
+  }
+
   const filtered = users.filter(u => {
     if (search && !u.email.toLowerCase().includes(search.toLowerCase())) return false
     if (filterRole !== 'ALL' && u.role !== filterRole) return false
@@ -39,12 +61,21 @@ export default function AdminPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold dark:text-gray-100">{t('admin.title')}</h1>
-        <button
-          onClick={downloadBackup}
-          className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700"
-        >
-          {t('admin.backup')}
-        </button>
+        <div className="flex gap-2 items-center">
+          {restoreMsg && (
+            <span className={`text-sm ${restoreMsg.ok ? 'text-green-500' : 'text-red-500'}`}>{restoreMsg.text}</span>
+          )}
+          <label className={`cursor-pointer px-4 py-2 rounded text-sm text-white ${restoring ? 'bg-orange-400 opacity-60' : 'bg-orange-500 hover:bg-orange-600'}`}>
+            {restoring ? '...' : t('admin.restore')}
+            <input ref={restoreInputRef} type="file" accept=".json" className="hidden" disabled={restoring} onChange={handleRestore} />
+          </label>
+          <button
+            onClick={downloadBackup}
+            className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700"
+          >
+            {t('admin.backup')}
+          </button>
+        </div>
       </div>
 
       {requests.length > 0 && (
@@ -57,7 +88,7 @@ export default function AdminPage() {
               <div key={r.id} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0">
                 <div>
                   <span className="text-sm font-medium dark:text-gray-200">{r.email}</span>
-                  <span className="ml-2 text-xs text-gray-400">{r.createdAt.slice(0, 10)}</span>
+                  <span className="ml-2 text-xs text-gray-400">{fmtDate(r.createdAt)}</span>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -143,7 +174,7 @@ export default function AdminPage() {
                     {u.enabled ? t('admin.statusActive') : t('admin.statusDisabled')}
                   </span>
                 </td>
-                <td className="px-4 py-2 text-gray-500 dark:text-gray-400 text-xs">{u.createdAt.slice(0, 10)}</td>
+                <td className="px-4 py-2 text-gray-500 dark:text-gray-400 text-xs">{fmtDate(u.createdAt)}</td>
                 <td className="px-4 py-2">
                   {u.role !== 'ADMIN' && (
                     <div className="flex gap-2 justify-end">
