@@ -3,6 +3,7 @@ package com.example.billscalculatorbackend.controller;
 import com.example.billscalculatorbackend.model.RegistrationRequest;
 import com.example.billscalculatorbackend.model.Role;
 import com.example.billscalculatorbackend.model.User;
+import com.example.billscalculatorbackend.repository.PasswordResetTokenRepository;
 import com.example.billscalculatorbackend.repository.RegistrationRequestRepository;
 import com.example.billscalculatorbackend.service.IoService;
 import com.example.billscalculatorbackend.service.UserService;
@@ -26,6 +27,7 @@ public class AdminController {
 
     private final UserService userService;
     private final RegistrationRequestRepository requestRepo;
+    private final PasswordResetTokenRepository passwordResetTokenRepo;
     private final IoService ioService;
 
     @GetMapping("/users")
@@ -73,6 +75,9 @@ public class AdminController {
         return userService.findById(id).map(u -> {
             if (u.getRole() == Role.ADMIN)
                 return ResponseEntity.badRequest().body("Cannot delete admin");
+            ioService.clearAll(u);
+            requestRepo.deleteByEmail(u.getEmail());
+            passwordResetTokenRepo.deleteByEmail(u.getEmail());
             userService.deleteById(id);
             return ResponseEntity.ok().body("Deleted");
         }).orElse(ResponseEntity.notFound().build());
@@ -98,6 +103,7 @@ public class AdminController {
             for (User u : userService.findAll()) {
                 ObjectNode node = mapper.createObjectNode();
                 node.put("email", u.getEmail());
+                node.put("passwordHash", u.getPassword());
                 node.put("role", u.getRole() != null ? u.getRole().name() : "USER");
                 node.put("enabled", u.isEnabled());
                 node.set("data", mapper.readTree(ioService.exportJson(u)));
@@ -112,5 +118,37 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @PostMapping("/restore")
+    public ResponseEntity<?> restore(@RequestBody com.fasterxml.jackson.databind.JsonNode body) {
+        if (!body.isArray()) return ResponseEntity.badRequest().body("Expected JSON array");
+
+        ObjectMapper mapper = new ObjectMapper();
+        int restored = 0, skipped = 0;
+
+        for (com.fasterxml.jackson.databind.JsonNode entry : body) {
+            String email = entry.path("email").asText("");
+            com.fasterxml.jackson.databind.JsonNode dataNode = entry.get("data");
+            if (email.isBlank() || dataNode == null) { skipped++; continue; }
+
+            try {
+                User user = userService.findByEmail(email);
+                if (user == null) {
+                    String passwordHash = entry.path("passwordHash").asText(null);
+                    Role role;
+                    try { role = Role.valueOf(entry.path("role").asText("USER")); } catch (Exception e) { role = Role.USER; }
+                    boolean enabled = entry.path("enabled").asBoolean(true);
+                    user = userService.createFull(email, passwordHash, role, enabled);
+                }
+                ioService.importJson(user, mapper.writeValueAsString(dataNode));
+                requestRepo.deleteByEmail(email);
+                restored++;
+            } catch (Exception e) {
+                skipped++;
+            }
+        }
+
+        return ResponseEntity.ok(Map.of("restored", restored, "skipped", skipped));
     }
 }
