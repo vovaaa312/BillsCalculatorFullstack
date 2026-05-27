@@ -32,6 +32,15 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User createFull(String email, String passwordHash, Role role, boolean enabled) {
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(passwordHash);
+        user.setRole(role != null ? role : Role.USER);
+        user.setEnabled(enabled);
+        return userRepository.save(user);
+    }
+
     public List<User> findAll() {
         return userRepository.findAll();
     }

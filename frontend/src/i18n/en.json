@@ -170,6 +170,10 @@
   "admin": {
     "title": "User Management",
     "backup": "Download Backup",
+    "restore": "Restore Backup",
+    "restoreConfirm": "This will overwrite all user data from the backup. Continue?",
+    "restoreSuccess": "Restored: {{restored}} users, skipped: {{skipped}}",
+    "restoreFail": "Restore failed. Check if the file is a valid backup.",
     "users": "Users",
     "pendingRequests": "Registration Requests",
     "approve": "Approve",

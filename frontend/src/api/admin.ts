@@ -26,7 +26,17 @@ export const downloadBackup = async () => {
   const url = URL.createObjectURL(res.data)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'backup.json'
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`
+  a.download = `backup_${stamp}.json`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export const restoreBackup = async (file: File): Promise<{ restored: number; skipped: number }> => {
+  const text = await file.text()
+  const json = JSON.parse(text)
+  const res = await client.post('/admin/restore', json)
+  return res.data
 }

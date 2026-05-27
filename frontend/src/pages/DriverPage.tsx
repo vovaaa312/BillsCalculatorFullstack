@@ -1,6 +1,9 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { fmtDateTime } from '../utils/date'
+import { useSortable } from '../hooks/useSortable'
+import SortableTh from '../components/SortableTh'
 import { getShifts, createShift, updateShift, deleteShift } from '../api/driver'
 import type { DriverShift, DriverFilter } from '../types/driver'
 import Modal from '../components/Modal'
@@ -38,6 +41,7 @@ export default function DriverPage() {
     else createMut.mutate(s)
   }
 
+  const { sorted, sortKey, dir, sortBy } = useSortable(shifts, 'start', 'desc')
   const [showFilter, setShowFilter] = useState(false)
   const totalEarnings = shifts.reduce((s, sh) => s + (sh.earnings ?? 0), 0)
   const hasFilter = Object.values(filter).some(Boolean)
@@ -90,22 +94,22 @@ export default function DriverPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase">
               <tr>
-                <th className="px-4 py-2 text-left">{t('driver.colDriver')}</th>
-                <th className="px-4 py-2 text-left">{t('driver.colStart')}</th>
-                <th className="px-4 py-2 text-left">{t('driver.colEnd')}</th>
-                <th className="px-4 py-2 text-right">{t('driver.colKm')}</th>
-                <th className="px-4 py-2 text-right">{t('driver.colHours')}</th>
-                <th className="px-4 py-2 text-right">{t('driver.colRate')}</th>
-                <th className="px-4 py-2 text-right">{t('driver.colEarnings')}</th>
+                <SortableTh label={t('driver.colDriver')}   colKey="driverName"  sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-left" />
+                <SortableTh label={t('driver.colStart')}    colKey="start"       sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-left" />
+                <SortableTh label={t('driver.colEnd')}      colKey="end"         sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-left" />
+                <SortableTh label={t('driver.colKm')}       colKey="drivenKm"    sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-right" />
+                <SortableTh label={t('driver.colHours')}    colKey="totalHours"  sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-right" />
+                <SortableTh label={t('driver.colRate')}     colKey="hourlyRate"  sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-right" />
+                <SortableTh label={t('driver.colEarnings')} colKey="earnings"    sortKey={sortKey as string} dir={dir} onSort={sortBy} className="px-4 py-2 text-right" />
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody>
-              {shifts.map(s => (
+              {sorted.map(s => (
                 <tr key={s.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-100">
                   <td className="px-4 py-2 font-medium">{s.driverName}</td>
-                  <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{String(s.start).replace('T', ' ').slice(0, 16)}</td>
-                  <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{String(s.end).replace('T', ' ').slice(0, 16)}</td>
+                  <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{fmtDateTime(s.start)}</td>
+                  <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{fmtDateTime(s.end)}</td>
                   <td className="px-4 py-2 text-right">{s.drivenKm ?? Math.max(0, s.kmEnd - s.kmStart)} km</td>
                   <td className="px-4 py-2 text-right">{(s.totalHours ?? 0).toFixed(1)}</td>
                   <td className="px-4 py-2 text-right">{s.hourlyRate} {t('common.currency')}</td>

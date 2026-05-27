@@ -170,6 +170,10 @@
   "admin": {
     "title": "Správa uživatelů",
     "backup": "Stáhnout zálohu",
+    "restore": "Obnovit zálohu",
+    "restoreConfirm": "Tato akce přepíše všechna uživatelská data ze zálohy. Pokračovat?",
+    "restoreSuccess": "Obnoveno: {{restored}} uživatelů, přeskočeno: {{skipped}}",
+    "restoreFail": "Obnovení selhalo. Zkontrolujte, zda je soubor platnou zálohou.",
     "users": "Uživatelé",
     "pendingRequests": "Žádosti o registraci",
     "approve": "Schválit",
