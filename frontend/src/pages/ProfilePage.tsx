@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { fmtDate } from '../utils/date'
 import { getProfile, changePassword } from '../api/profile'
 import { useAuth } from '../context/AuthContext'
 
@@ -59,7 +60,7 @@ export default function ProfilePage() {
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500 dark:text-gray-400">{t('profile.since')}</span>
-          <span className="dark:text-gray-200">{profile?.createdAt?.slice(0, 10) ?? '...'}</span>
+          <span className="dark:text-gray-200">{profile?.createdAt ? fmtDate(profile.createdAt) : '...'}</span>
         </div>
       </div>
 
