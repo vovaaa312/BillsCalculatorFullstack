@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { fmtDate } from '../utils/date'
 import { useSortable } from '../hooks/useSortable'
 import SortableTh from '../components/SortableTh'
-import { getInvoices, createInvoice, updateInvoice, deleteInvoice, importInvoicesPdf } from '../api/faktury'
+import { getInvoices, createInvoice, updateInvoice, deleteInvoice, importInvoicesPdf, getInvoicePdf } from '../api/faktury'
 import type { Invoice, InvoiceItem, InvoiceFilter, PaymentType, InvoiceStatus } from '../types/faktura'
 import Modal from '../components/Modal'
 
@@ -31,6 +31,8 @@ export default function FakturyPage() {
   const [filter, setFilter] = useState<InvoiceFilter>({})
   const [editing, setEditing] = useState<Invoice | null>(null)
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [pdfLoading, setPdfLoading] = useState<number | null>(null)
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['invoices', filter],
@@ -41,11 +43,30 @@ export default function FakturyPage() {
   const createMut = useMutation({ mutationFn: createInvoice, onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices'] }); setEditing(null) } })
   const updateMut = useMutation({ mutationFn: ({ id, f }: { id: number; f: Invoice }) => updateInvoice(id, f), onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices'] }); setEditing(null) } })
   const deleteMut = useMutation({ mutationFn: deleteInvoice, onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }) })
-  const importMut = useMutation({ mutationFn: importInvoicesPdf, onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }) })
+  const importMut = useMutation({
+    mutationFn: async (files: File[]) => { for (const f of files) await importInvoicesPdf(f) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
+  })
 
   const handleSave = (f: Invoice) => {
     if (editing?.id) updateMut.mutate({ id: editing.id, f })
     else createMut.mutate(f)
+  }
+
+  const handleViewPdf = async (id: number) => {
+    setPdfLoading(id)
+    try {
+      const blob = await getInvoicePdf(id)
+      const url = URL.createObjectURL(blob)
+      setPdfUrl(url)
+    } finally {
+      setPdfLoading(null)
+    }
+  }
+
+  const closePdf = () => {
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl)
+    setPdfUrl(null)
   }
 
   const toggleExpand = (id: number) => setExpanded(prev => {
@@ -95,8 +116,8 @@ export default function FakturyPage() {
             <label className="cursor-pointer bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700">
               {importMut.isPending ? '...' : <span className="hidden sm:inline">{t('invoice.importPdfFull')} </span>}
               {t('invoice.importPdf')}
-              <input type="file" accept=".pdf" className="hidden" disabled={importMut.isPending}
-                onChange={e => { if (e.target.files?.[0]) importMut.mutate(e.target.files[0]); e.target.value = '' }} />
+              <input type="file" accept=".pdf" multiple className="hidden" disabled={importMut.isPending}
+                onChange={e => { const files = Array.from(e.target.files ?? []); if (files.length) importMut.mutate(files); e.target.value = '' }} />
             </label>
             <button onClick={() => setEditing(emptyInvoice())} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
               + <span className="hidden sm:inline">{t('common.save').replace('Uložit','Přidat')}</span>
@@ -145,6 +166,15 @@ export default function FakturyPage() {
                     </td>
                     <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
                       <div className="flex gap-2 justify-end">
+                        {f.hasPdf && f.id && (
+                          <button
+                            onClick={() => handleViewPdf(f.id!)}
+                            disabled={pdfLoading === f.id}
+                            className="text-purple-500 hover:underline text-xs disabled:opacity-50"
+                          >
+                            {pdfLoading === f.id ? '...' : 'PDF'}
+                          </button>
+                        )}
                         <button onClick={() => setEditing(f)} className="text-blue-500 hover:underline text-xs">{t('common.edit')}</button>
                         <button onClick={() => f.id && deleteMut.mutate(f.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
                       </div>
@@ -199,6 +229,12 @@ export default function FakturyPage() {
         {editing && (
           <Modal title={editing.id ? t('invoice.edit') : t('invoice.new')} onClose={() => setEditing(null)} wide>
             <InvoiceForm initial={editing} onSave={handleSave} onCancel={() => setEditing(null)} />
+          </Modal>
+        )}
+
+        {pdfUrl && (
+          <Modal title="PDF" onClose={closePdf} fullWidth>
+            <iframe src={pdfUrl} className="w-full border-0 rounded" style={{ height: '75vh' }} title="Invoice PDF" />
           </Modal>
         )}
       </div>

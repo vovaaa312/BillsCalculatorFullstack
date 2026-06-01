@@ -18,3 +18,6 @@ export const importInvoicesPdf = (file: File) => {
   fd.append('file', file)
   return client.post<Invoice[]>('/invoices/import-pdf', fd).then(r => r.data)
 }
+
+export const getInvoicePdf = (id: number) =>
+  client.get<Blob>(`/invoices/${id}/pdf`, { responseType: 'blob' }).then(r => r.data)

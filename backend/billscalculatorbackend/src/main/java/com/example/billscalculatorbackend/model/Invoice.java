@@ -46,6 +46,9 @@ public class Invoice {
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceItem> items = new ArrayList<>();
 
+    @Column(name = "has_pdf")
+    private Boolean hasPdf = false;
+
     public Invoice(String name, int amount, PaymentType paymentType, InvoiceStatus status, LocalDate date) {
         this.name = name;
         this.amount = amount;

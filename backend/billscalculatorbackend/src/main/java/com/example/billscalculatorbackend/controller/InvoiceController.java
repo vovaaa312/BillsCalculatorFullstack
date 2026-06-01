@@ -5,6 +5,7 @@ import com.example.billscalculatorbackend.model.Invoice;
 import com.example.billscalculatorbackend.service.InvoiceService;
 import com.example.billscalculatorbackend.service.PdfParserService;
 import com.example.billscalculatorbackend.service.UserService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,10 +51,20 @@ public class InvoiceController extends BaseController {
 
     @PostMapping(value = "/import-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<Invoice>> importPdf(@RequestParam("file") MultipartFile file) throws Exception {
+        byte[] pdfBytes = file.getBytes();
         List<Invoice> parsed = pdfParserService.parseUpload(file);
-        List<Invoice> saved  = parsed.stream()
-                .map(f -> invoiceService.create(currentUser(), f))
+        List<Invoice> saved = parsed.stream()
+                .map(f -> invoiceService.createWithPdf(currentUser(), f, pdfBytes))
                 .toList();
         return ResponseEntity.ok(saved);
+    }
+
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> getPdf(@PathVariable Long id) {
+        return invoiceService.getPdfData(currentUser(), id)
+                .map(data -> ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"invoice-" + id + ".pdf\"")
+                        .body(data))
+                .orElse(ResponseEntity.notFound().build());
     }
 }

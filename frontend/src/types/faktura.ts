@@ -25,6 +25,7 @@ export interface Invoice {
   totalPrice?: number
   totalPriceNoVat?: number
   totalQuantity?: number
+  hasPdf?: boolean
 }
 
 export interface InvoiceFilter {
