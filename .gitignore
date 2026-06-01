@@ -19,3 +19,6 @@ Thumbs.db
 
 # Private docs (credentials screenshots, etc.)
 docs/private/
+docs/node_modules/
+docs/package.json
+docs/package-lock.json
