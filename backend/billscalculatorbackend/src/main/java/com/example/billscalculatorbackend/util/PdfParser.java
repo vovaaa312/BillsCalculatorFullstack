@@ -80,22 +80,58 @@ public class PdfParser {
         String[] lines = text.split("\\r?\\n");
         boolean inSection = false;
         String num = "(\\d{1,3}(?:[\\s\\u00a0]\\d{3})*[,.]\\d{2})";
-        Pattern itemPat = Pattern.compile("^(.+?)\\s+(\\d+)\\s+ks\\s+" + num + "\\s+" + num + "(?:\\s+\\d+(?:[,.]\\d+)?\\s*%)?\\s+" + num + "\\s+(\\d+)\\s*%\\s+" + num + "\\s+" + num + "\\s*$");
+
+        // Format A (5 price values): name qty ks p1 p2 [opt%] p3 VAT% p4 p5
+        Pattern patA = Pattern.compile(
+            "^(.+?)\\s+(\\d+)\\s+ks\\s+" + num + "\\s+" + num +
+            "(?:\\s+\\d+(?:[,.]\\d+)?\\s*%)?\\s+" + num +
+            "\\s+(\\d+)\\s*%\\s+" + num + "\\s+" + num + "\\s*$");
+
+        // Format B (POHODA/BAGSY): name qty ks J.cena(excl) Cena(excl) VAT% DPH total
+        Pattern patB = Pattern.compile(
+            "^(.+?)\\s+(\\d+)\\s+ks\\s+" + num + "\\s+" + num +
+            "\\s+(\\d{1,2})\\s*%\\s+" + num + "\\s+" + num + "\\s*$");
+
         for (String raw : lines) {
             String line = raw.trim();
             if (line.isEmpty()) continue;
             if (!inSection) { if (containsCi(line,"Označení dodávky")||containsCi(line,"Oznaceni dodavky")) inSection=true; continue; }
             if (containsCi(line,"Součet položek")||containsCi(line,"Soucet polozek")||containsCi(line,"CELKEM K")||containsCi(line,"Rekapitulace DPH")) break;
-            Matcher m = itemPat.matcher(line);
-            if (!m.matches()) continue;
-            String name = m.group(1).trim();
-            int colon = name.lastIndexOf(':');
-            if (colon >= 0 && colon < name.length()-1) name = name.substring(colon+1).trim();
-            try {
-                out.add(new InvoiceItem(name, Integer.parseInt(m.group(2)), parseDouble(m.group(3)), parseDouble(m.group(4)), parseDouble(m.group(5)), Integer.parseInt(m.group(6)), parseDouble(m.group(7)), parseDouble(m.group(8))));
-            } catch (NumberFormatException ignored) {}
+
+            Matcher m = patA.matcher(line);
+            if (m.matches()) {
+                String name = cleanName(m.group(1));
+                try {
+                    out.add(new InvoiceItem(name, Integer.parseInt(m.group(2)),
+                        parseDouble(m.group(3)), parseDouble(m.group(4)), parseDouble(m.group(5)),
+                        Integer.parseInt(m.group(6)), parseDouble(m.group(7)), parseDouble(m.group(8))));
+                } catch (NumberFormatException ignored) {}
+                continue;
+            }
+
+            Matcher mb = patB.matcher(line);
+            if (mb.matches()) {
+                String name = cleanName(mb.group(1));
+                try {
+                    int qty     = Integer.parseInt(mb.group(2));
+                    double jcena  = parseDouble(mb.group(3));  // unit price excl. VAT
+                    double cena   = parseDouble(mb.group(4));  // total excl. VAT
+                    int vatPct  = Integer.parseInt(mb.group(5));
+                    double dph    = parseDouble(mb.group(6));  // VAT amount
+                    double total  = parseDouble(mb.group(7));  // total incl. VAT
+                    double unitWithVat = Math.round(jcena * (1 + vatPct / 100.0) * 100.0) / 100.0;
+                    out.add(new InvoiceItem(name, qty, unitWithVat, jcena, cena, vatPct, dph, total));
+                } catch (NumberFormatException ignored) {}
+            }
         }
         return out;
+    }
+
+    private static String cleanName(String raw) {
+        String name = raw.trim();
+        int colon = name.lastIndexOf(':');
+        if (colon >= 0 && colon < name.length() - 1) name = name.substring(colon + 1).trim();
+        return name;
     }
 
     private static List<InvoiceItem> extractItemsColumnar(String text) {
