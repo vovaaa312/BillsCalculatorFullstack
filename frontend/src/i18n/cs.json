@@ -165,7 +165,8 @@
     "search": "Hledat...",
     "currency": "Kč",
     "records": "záznamů",
-    "noResults": "Žádné výsledky"
+    "noResults": "Žádné výsledky",
+    "deleteConfirm": "Opravdu chcete smazat tuto položku?"
   },
   "admin": {
     "title": "Správa uživatelů",

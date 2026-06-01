@@ -165,7 +165,8 @@
     "search": "Search...",
     "currency": "CZK",
     "records": "records",
-    "noResults": "No results"
+    "noResults": "No results",
+    "deleteConfirm": "Are you sure you want to delete this item?"
   },
   "admin": {
     "title": "User Management",

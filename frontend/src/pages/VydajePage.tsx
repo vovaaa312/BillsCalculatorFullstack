@@ -113,7 +113,7 @@ export default function VydajePage() {
                   <td className="px-4 py-2">
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => setEditing(v)} className="text-blue-500 hover:underline text-xs">{t('common.edit')}</button>
-                      <button onClick={() => v.id && deleteMut.mutate(v.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
+                      <button onClick={() => v.id && window.confirm(t('common.deleteConfirm')) && deleteMut.mutate(v.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
                     </div>
                   </td>
                 </tr>
