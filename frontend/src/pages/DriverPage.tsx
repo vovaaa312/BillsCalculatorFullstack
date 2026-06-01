@@ -117,7 +117,7 @@ export default function DriverPage() {
                   <td className="px-4 py-2">
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => setEditing(s)} className="text-blue-500 hover:underline text-xs">{t('common.edit')}</button>
-                      <button onClick={() => s.id && deleteMut.mutate(s.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
+                      <button onClick={() => s.id && window.confirm(t('common.deleteConfirm')) && deleteMut.mutate(s.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
                     </div>
                   </td>
                 </tr>

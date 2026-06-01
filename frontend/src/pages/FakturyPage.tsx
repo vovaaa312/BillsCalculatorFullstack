@@ -176,7 +176,7 @@ export default function FakturyPage() {
                           </button>
                         )}
                         <button onClick={() => setEditing(f)} className="text-blue-500 hover:underline text-xs">{t('common.edit')}</button>
-                        <button onClick={() => f.id && deleteMut.mutate(f.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
+                        <button onClick={() => f.id && window.confirm(t('common.deleteConfirm')) && deleteMut.mutate(f.id)} className="text-red-500 hover:underline text-xs">{t('common.delete')}</button>
                       </div>
                     </td>
                   </tr>,
