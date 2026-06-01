@@ -2,7 +2,9 @@ package com.example.billscalculatorbackend.service;
 
 import com.example.billscalculatorbackend.dto.InvoiceFilterDto;
 import com.example.billscalculatorbackend.model.Invoice;
+import com.example.billscalculatorbackend.model.InvoicePdf;
 import com.example.billscalculatorbackend.model.User;
+import com.example.billscalculatorbackend.repository.InvoicePdfRepository;
 import com.example.billscalculatorbackend.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,12 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepo;
+    private final InvoicePdfRepository invoicePdfRepo;
 
     public List<Invoice> getAll(User user) {
         return invoiceRepo.findByUserWithItems(user);
@@ -60,6 +64,29 @@ public class InvoiceService {
     public void delete(User user, Long id) {
         invoiceRepo.findById(id)
                 .filter(f -> f.getUser().getId().equals(user.getId()))
-                .ifPresent(invoiceRepo::delete);
+                .ifPresent(invoice -> {
+                    invoicePdfRepo.findByInvoiceId(id).ifPresent(invoicePdfRepo::delete);
+                    invoiceRepo.delete(invoice);
+                });
+    }
+
+    public Invoice getById(User user, Long id) {
+        return invoiceRepo.findById(id)
+                .filter(f -> f.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @Transactional
+    public Invoice createWithPdf(User user, Invoice invoice, byte[] pdfBytes) {
+        Invoice saved = create(user, invoice);
+        saved.setHasPdf(true);
+        invoicePdfRepo.save(new InvoicePdf(saved, pdfBytes));
+        return invoiceRepo.save(saved);
+    }
+
+    public Optional<byte[]> getPdfData(User user, Long id) {
+        Invoice inv = getById(user, id);
+        if (!Boolean.TRUE.equals(inv.getHasPdf())) return Optional.empty();
+        return invoicePdfRepo.findByInvoiceId(id).map(InvoicePdf::getData);
     }
 }
