@@ -124,7 +124,21 @@
     "optimizing": "Optimalizuji...",
     "route": "Trasa",
     "approxNote": "* přibližné vzdálenosti po ruční úpravě",
-    "resetOrder": "Obnovit pořadí"
+    "resetOrder": "Obnovit pořadí",
+    "importUrl": "Importovat z URL",
+    "importUrlPlaceholder": "Vložte URL trasy z Google Maps nebo Mapy.cz...",
+    "importUrlBtn": "Importovat",
+    "importUrlError": "URL nelze zpracovat. Použijte odkaz vygenerovaný tlačítky Google Maps nebo Mapy.cz.",
+    "importUrlLoading": "Načítání adres...",
+    "departure": "Odjezd",
+    "arrivalAt": "příjezd",
+    "saveRoute": "Uložit trasu",
+    "saveRouteName": "Název trasy",
+    "saveRouteBtn": "Uložit",
+    "savedRoutes": "Uložené trasy",
+    "savedNoData": "Žádné uložené trasy",
+    "loadRoute": "Načíst",
+    "savedAt": "Uloženo"
   },
   "report": {
     "title": "Report",

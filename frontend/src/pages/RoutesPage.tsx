@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { optimizeRoute, resolveMapsUrl } from '../api/routes'
-import type { RoutePoint, RouteResult } from '../types/route'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { optimizeRoute, resolveMapsUrl, resolveRouteUrl, getSavedRoutes, saveRoute, deleteSavedRoute } from '../api/routes'
+import type { RoutePoint, RouteResult, SavedRoute } from '../types/route'
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -59,6 +59,12 @@ function mapyCzLink(points: RoutePoint[]) {
   return middle.length > 0 ? `${base}&waypoints=${middle.join(';')}` : base
 }
 
+function addMinutes(timeStr: string, minutes: number): string {
+  const [h, m] = timeStr.split(':').map(Number)
+  const total = h * 60 + m + Math.round(minutes)
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 function parseGoogleMapsUrl(str: string): RoutePoint | null {
   try {
     const atMatch = str.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
@@ -67,6 +73,38 @@ function parseGoogleMapsUrl(str: string): RoutePoint | null {
     if (qMatch) return { name: `${qMatch[1]}, ${qMatch[2]}`, lat: +qMatch[1], lon: +qMatch[2] }
     const llMatch = str.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/)
     if (llMatch) return { name: `${llMatch[1]}, ${llMatch[2]}`, lat: +llMatch[1], lon: +llMatch[2] }
+  } catch { /* ignore */ }
+  return null
+}
+
+// Parse a full route URL (Google Maps or Mapy.cz) into ordered lat/lon pairs
+function parseRouteUrl(str: string): { lat: number; lon: number }[] | null {
+  try {
+    const url = new URL(str)
+    // Google Maps: ?api=1&origin=lat,lon&destination=lat,lon&waypoints=lat,lon|lat,lon
+    if (url.hostname.includes('google.com') && url.pathname.includes('/maps/dir')) {
+      const origin = url.searchParams.get('origin')
+      const destination = url.searchParams.get('destination')
+      if (!origin || !destination) return null
+      const parseLatLon = (s: string) => { const [la, lo] = s.split(',').map(Number); return { lat: la, lon: lo } }
+      const points = [parseLatLon(origin)]
+      const wps = url.searchParams.get('waypoints')
+      if (wps) wps.split('|').forEach(w => points.push(parseLatLon(w)))
+      points.push(parseLatLon(destination))
+      return points
+    }
+    // Mapy.cz: ?start=lon,lat&end=lon,lat&waypoints=lon,lat;lon,lat  (note: lon,lat order!)
+    if (url.hostname.includes('mapy.') || url.pathname.includes('/fnc/v1/route')) {
+      const startParam = url.searchParams.get('start')
+      const endParam = url.searchParams.get('end')
+      if (!startParam || !endParam) return null
+      const parseLonLat = (s: string) => { const [lo, la] = s.split(',').map(Number); return { lat: la, lon: lo } }
+      const points = [parseLonLat(startParam)]
+      const wps = url.searchParams.get('waypoints')
+      if (wps) wps.split(';').forEach(w => w && points.push(parseLonLat(w)))
+      points.push(parseLonLat(endParam))
+      return points
+    }
   } catch { /* ignore */ }
   return null
 }
@@ -105,12 +143,26 @@ function MapClickHandler({ target, onPlace }: { target: MapClickTarget; onPlace:
 
 export default function RoutesPage() {
   const { t } = useTranslation()
+  const qc = useQueryClient()
   const [start, setStart] = useState<PointEntry>(emptyEntry())
   const [waypoints, setWaypoints] = useState<PointEntry[]>([emptyEntry()])
   const [end, setEnd] = useState<PointEntry>(emptyEntry())
   const [result, setResult] = useState<RouteResult | null>(null)
   const [editablePoints, setEditablePoints] = useState<RoutePoint[]>([])
   const [mapClickTarget, setMapClickTarget] = useState<MapClickTarget>(null)
+  const [departureTime, setDepartureTime] = useState('')
+  const [showSave, setShowSave] = useState(false)
+  const [saveName, setSaveName] = useState('')
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [urlInput, setUrlInput] = useState('')
+  const [urlLoading, setUrlLoading] = useState(false)
+  const [urlError, setUrlError] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
+
+  const { data: savedRoutes = [] } = useQuery({
+    queryKey: ['savedRoutes'],
+    queryFn: getSavedRoutes,
+  })
 
   const optimizeMut = useMutation({
     mutationFn: optimizeRoute,
@@ -151,6 +203,64 @@ export default function RoutesPage() {
       ...(end.point ? [end.point] : []),
     ]
     optimizeMut.mutate({ points })
+  }
+
+  const handleImportUrl = async () => {
+    setUrlError(false)
+    const raw = urlInput.trim()
+    setUrlLoading(true)
+    try {
+      let points: RoutePoint[]
+      // Try frontend parsing first (full URLs with coords in query params)
+      const coords = parseRouteUrl(raw)
+      if (coords && coords.length >= 2) {
+        points = await Promise.all(coords.map(c => reverseGeocode(c.lat, c.lon)))
+      } else {
+        // Fall back to backend resolver (handles short URLs and path-based formats)
+        points = await resolveRouteUrl(raw)
+      }
+      if (points.length < 2) { setUrlError(true); return }
+      setStart({ address: points[0].name, point: points[0], geocoding: false })
+      setEnd({ address: points[points.length - 1].name, point: points[points.length - 1], geocoding: false })
+      const middle = points.slice(1, -1)
+      setWaypoints(middle.length > 0 ? middle.map(p => ({ address: p.name, point: p, geocoding: false })) : [emptyEntry()])
+      setUrlInput('')
+    } catch {
+      setUrlError(true)
+    } finally {
+      setUrlLoading(false)
+    }
+  }
+
+  const handleLoadRoute = (route: SavedRoute) => {
+    if (!route.points || route.points.length < 2) return
+    const pts = route.points
+    setStart({ address: pts[0].name, point: pts[0], geocoding: false })
+    setEnd({ address: pts[pts.length - 1].name, point: pts[pts.length - 1], geocoding: false })
+    const middle = pts.slice(1, -1)
+    setWaypoints(middle.length > 0 ? middle.map(p => ({ address: p.name, point: p, geocoding: false })) : [emptyEntry()])
+    setResult(null)
+    setEditablePoints([])
+    setShowSaved(false)
+  }
+
+  const handleDeleteSaved = async (id: number) => {
+    if (!window.confirm(t('common.deleteConfirm'))) return
+    await deleteSavedRoute(id)
+    qc.invalidateQueries({ queryKey: ['savedRoutes'] })
+  }
+
+  const handleSaveRoute = async () => {
+    if (!editablePoints.length) return
+    setSaveLoading(true)
+    try {
+      await saveRoute(saveName || editablePoints[0].name, editablePoints)
+      qc.invalidateQueries({ queryKey: ['savedRoutes'] })
+      setShowSave(false)
+      setSaveName('')
+    } finally {
+      setSaveLoading(false)
+    }
   }
 
   const sensors = useSensors(
@@ -197,6 +307,16 @@ export default function RoutesPage() {
   const totalDurMin = displaySegments.reduce((s, seg) => s + (seg.durationMin ?? 0), 0)
   const hasApprox = displaySegments.some(s => s.approxKm !== null)
 
+  // Cumulative arrival times per segment endpoint
+  const arrivalTimes = useMemo(() => {
+    if (!departureTime) return []
+    let cumMin = 0
+    return displaySegments.map(seg => {
+      cumMin += seg.durationMin ?? 0
+      return addMinutes(departureTime, cumMin)
+    })
+  }, [departureTime, displaySegments])
+
   const isReordered = result !== null && editablePoints.length > 0 &&
     editablePoints.some((p, i) => p !== result.orderedPoints[i])
 
@@ -211,6 +331,28 @@ export default function RoutesPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">{t('routes.title')}</h1>
+
+      {/* Import from URL */}
+      <div className="mb-4 bg-white dark:bg-gray-800 rounded shadow p-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400 shrink-0">{t('routes.importUrl')}</span>
+          <input
+            value={urlInput}
+            onChange={e => { setUrlInput(e.target.value); setUrlError(false) }}
+            onKeyDown={e => e.key === 'Enter' && urlInput && handleImportUrl()}
+            placeholder={t('routes.importUrlPlaceholder')}
+            className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm"
+          />
+          <button
+            onClick={handleImportUrl}
+            disabled={!urlInput.trim() || urlLoading}
+            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50 shrink-0"
+          >
+            {urlLoading ? t('routes.importUrlLoading') : t('routes.importUrlBtn')}
+          </button>
+        </div>
+        {urlError && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{t('routes.importUrlError')}</p>}
+      </div>
 
       {mapClickTarget !== null && (
         <div className="mb-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 rounded text-sm text-amber-800 dark:text-amber-300 flex items-center justify-between">
@@ -269,6 +411,33 @@ export default function RoutesPage() {
           >
             {optimizeMut.isPending ? t('routes.optimizing') : t('routes.optimize')}
           </button>
+
+          {/* Saved routes */}
+          <div className="bg-white dark:bg-gray-800 rounded shadow">
+            <button
+              onClick={() => setShowSaved(v => !v)}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              <span>{t('routes.savedRoutes')} {savedRoutes.length > 0 && <span className="text-xs text-gray-400">({savedRoutes.length})</span>}</span>
+              <span>{showSaved ? '▲' : '▼'}</span>
+            </button>
+            {showSaved && (
+              <div className="border-t dark:border-gray-700 max-h-64 overflow-y-auto">
+                {savedRoutes.length === 0 ? (
+                  <p className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">{t('routes.savedNoData')}</p>
+                ) : savedRoutes.map(r => (
+                  <div key={r.id} className="flex items-center gap-2 px-3 py-2 border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">{r.name}</p>
+                      <p className="text-xs text-gray-400">{r.points?.length} pts · {new Date(r.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <button onClick={() => handleLoadRoute(r)} className="text-blue-500 text-xs hover:underline shrink-0">{t('routes.loadRoute')}</button>
+                    <button onClick={() => handleDeleteSaved(r.id)} className="text-red-400 text-xs hover:underline shrink-0">{t('common.delete')}</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="md:col-span-2">
@@ -290,7 +459,7 @@ export default function RoutesPage() {
 
           {result && editablePoints.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded shadow p-4 text-sm">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <div>
                   <span className="font-semibold dark:text-gray-100">
                     {t('routes.route')}: {totalDistKm.toFixed(1)} km{totalDurMin > 0 ? ` · ${Math.round(totalDurMin)} min` : ''}
@@ -299,7 +468,7 @@ export default function RoutesPage() {
                     <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">{t('routes.approxNote')}</span>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {isReordered && (
                     <button
                       onClick={() => setEditablePoints([...result.orderedPoints])}
@@ -315,6 +484,48 @@ export default function RoutesPage() {
                 </div>
               </div>
 
+              {/* Departure time + Save */}
+              <div className="flex items-center gap-3 mb-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 shrink-0">{t('routes.departure')}:</label>
+                  <input
+                    type="time"
+                    value={departureTime}
+                    onChange={e => setDepartureTime(e.target.value)}
+                    className="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-0.5 text-xs"
+                  />
+                  {departureTime && (
+                    <button onClick={() => setDepartureTime('')} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowSave(v => !v)}
+                  className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-200 dark:hover:bg-purple-800"
+                >
+                  {t('routes.saveRoute')}
+                </button>
+              </div>
+
+              {showSave && (
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    value={saveName}
+                    onChange={e => setSaveName(e.target.value)}
+                    placeholder={t('routes.saveRouteName')}
+                    className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-xs"
+                    onKeyDown={e => e.key === 'Enter' && handleSaveRoute()}
+                  />
+                  <button
+                    onClick={handleSaveRoute}
+                    disabled={saveLoading}
+                    className="px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {t('routes.saveRouteBtn')}
+                  </button>
+                  <button onClick={() => setShowSave(false)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                </div>
+              )}
+
               <div className="mb-3 border dark:border-gray-700 rounded overflow-hidden">
                 {editablePoints[0] && (
                   <div className="flex items-center gap-2 px-3 py-2 border-b dark:border-gray-700 bg-green-50 dark:bg-green-950">
@@ -322,6 +533,9 @@ export default function RoutesPage() {
                     <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate" title={editablePoints[0].name}>
                       {editablePoints[0].name}
                     </span>
+                    {departureTime && (
+                      <span className="text-xs text-gray-400 shrink-0">{departureTime}</span>
+                    )}
                   </div>
                 )}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -330,7 +544,13 @@ export default function RoutesPage() {
                     strategy={verticalListSortingStrategy}
                   >
                     {editablePoints.slice(1).map((p, i) => (
-                      <SortablePointRow key={String(i + 1)} id={String(i + 1)} index={i + 1} point={p} />
+                      <SortablePointRow
+                        key={String(i + 1)}
+                        id={String(i + 1)}
+                        index={i + 1}
+                        point={p}
+                        arrivalTime={arrivalTimes[i]}
+                      />
                     ))}
                   </SortableContext>
                 </DndContext>
@@ -349,6 +569,11 @@ export default function RoutesPage() {
                           ? `${seg.distanceKm.toFixed(1)} km · ${Math.round(seg.durationMin!)} min`
                           : `~${seg.approxKm!.toFixed(1)} km`}
                       </span>
+                      {arrivalTimes[i] && (
+                        <span className="text-xs ml-2 text-blue-600 dark:text-blue-400 font-medium">
+                          → {t('routes.arrivalAt')} {arrivalTimes[i]}
+                        </span>
+                      )}
                     </div>
                     <a href={wazeLink(seg.from, seg.to)} target="_blank" rel="noopener noreferrer"
                       className="px-2 py-1 bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 rounded text-xs hover:bg-sky-200 dark:hover:bg-sky-800 shrink-0 ml-2">Waze</a>
@@ -363,7 +588,7 @@ export default function RoutesPage() {
   )
 }
 
-function SortablePointRow({ id, index, point }: { id: string; index: number; point: RoutePoint }) {
+function SortablePointRow({ id, index, point, arrivalTime }: { id: string; index: number; point: RoutePoint; arrivalTime?: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -379,6 +604,9 @@ function SortablePointRow({ id, index, point }: { id: string; index: number; poi
     >
       <span className="text-xs font-bold w-5 shrink-0 text-gray-400 dark:text-gray-500">{index}</span>
       <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate" title={point.name}>{point.name}</span>
+      {arrivalTime && (
+        <span className="text-xs text-blue-600 dark:text-blue-400 shrink-0 mr-1">{arrivalTime}</span>
+      )}
       <button
         {...attributes}
         {...listeners}
@@ -415,7 +643,6 @@ function AddressField({
     onChange({ ...entry, address: val, point: null, geocoding: false })
     setSuggestions([])
 
-    // Full Google Maps URL — extract coords directly
     const gmapsPoint = parseGoogleMapsUrl(val)
     if (gmapsPoint) {
       onChange({ address: val, point: gmapsPoint, geocoding: false })
@@ -423,7 +650,6 @@ function AddressField({
       return
     }
 
-    // Short Google Maps link — resolve via backend
     if (/maps\.app\.goo\.gl\/|goo\.gl\/maps/.test(val)) {
       onChange({ address: val, point: null, geocoding: true })
       resolveMapsUrl(val)
