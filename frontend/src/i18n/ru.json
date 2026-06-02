@@ -124,7 +124,21 @@
     "optimizing": "Оптимизирую...",
     "route": "Маршрут",
     "approxNote": "* приблизительные расстояния после ручного изменения",
-    "resetOrder": "Сбросить порядок"
+    "resetOrder": "Сбросить порядок",
+    "importUrl": "Импорт из URL",
+    "importUrlPlaceholder": "Вставьте URL маршрута из Google Maps или Mapy.cz...",
+    "importUrlBtn": "Импорт",
+    "importUrlError": "Не удалось разобрать URL. Используйте ссылку из кнопок Google Maps или Mapy.cz.",
+    "importUrlLoading": "Загрузка адресов...",
+    "departure": "Отправление",
+    "arrivalAt": "прибытие",
+    "saveRoute": "Сохранить маршрут",
+    "saveRouteName": "Название маршрута",
+    "saveRouteBtn": "Сохранить",
+    "savedRoutes": "Сохранённые маршруты",
+    "savedNoData": "Нет сохранённых маршрутов",
+    "loadRoute": "Загрузить",
+    "savedAt": "Сохранено"
   },
   "report": {
     "title": "Отчёт",

@@ -21,3 +21,10 @@ export interface RouteResult {
 export interface RouteRequest {
   points: RoutePoint[]
 }
+
+export interface SavedRoute {
+  id: number
+  name: string
+  points: RoutePoint[]
+  createdAt: string
+}
