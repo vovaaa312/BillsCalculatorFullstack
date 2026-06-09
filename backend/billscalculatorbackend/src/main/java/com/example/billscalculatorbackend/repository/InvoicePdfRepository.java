@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface InvoicePdfRepository extends JpaRepository<InvoicePdf, Long> {
     Optional<InvoicePdf> findByInvoiceId(Long invoiceId);
+
+    void deleteByInvoice_UserId(Long userId);
 }
