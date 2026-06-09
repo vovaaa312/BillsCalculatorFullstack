@@ -119,9 +119,10 @@ export default function RoutesPage() {
   const [editablePoints, setEditablePoints] = useState<RoutePoint[]>([])
   const [mapClickTarget, setMapClickTarget] = useState<MapClickTarget>(null)
   const [departureTime, setDepartureTime] = useState('')
-  const [showSave, setShowSave] = useState(false)
   const [saveName, setSaveName] = useState('')
   const [saveLoading, setSaveLoading] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  const [savedOk, setSavedOk] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
 
   const { data: savedRoutes = [] } = useQuery({
@@ -191,11 +192,16 @@ export default function RoutesPage() {
   const handleSaveRoute = async () => {
     if (!editablePoints.length) return
     setSaveLoading(true)
+    setSaveError(false)
     try {
       await saveRoute(saveName || editablePoints[0].name, editablePoints)
       qc.invalidateQueries({ queryKey: ['savedRoutes'] })
-      setShowSave(false)
       setSaveName('')
+      setSavedOk(true)
+      setShowSaved(true)
+      setTimeout(() => setSavedOk(false), 3000)
+    } catch {
+      setSaveError(true)
     } finally {
       setSaveLoading(false)
     }
@@ -413,33 +419,26 @@ export default function RoutesPage() {
                     <button onClick={() => setDepartureTime('')} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
                   )}
                 </div>
-                <button
-                  onClick={() => setShowSave(v => !v)}
-                  className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-200 dark:hover:bg-purple-800"
-                >
-                  {t('routes.saveRoute')}
-                </button>
               </div>
 
-              {showSave && (
-                <div className="flex items-center gap-2 mb-3">
-                  <input
-                    value={saveName}
-                    onChange={e => setSaveName(e.target.value)}
-                    placeholder={t('routes.saveRouteName')}
-                    className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-xs"
-                    onKeyDown={e => e.key === 'Enter' && handleSaveRoute()}
-                  />
-                  <button
-                    onClick={handleSaveRoute}
-                    disabled={saveLoading}
-                    className="px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    {t('routes.saveRouteBtn')}
-                  </button>
-                  <button onClick={() => setShowSave(false)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
-                </div>
-              )}
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  value={saveName}
+                  onChange={e => setSaveName(e.target.value)}
+                  placeholder={t('routes.saveRouteName')}
+                  className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-xs"
+                  onKeyDown={e => e.key === 'Enter' && handleSaveRoute()}
+                />
+                <button
+                  onClick={handleSaveRoute}
+                  disabled={saveLoading}
+                  className="px-3 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 disabled:opacity-50 shrink-0"
+                >
+                  {saveLoading ? '...' : t('routes.saveRoute')}
+                </button>
+                {savedOk && <span className="text-xs text-green-500">✓</span>}
+                {saveError && <span className="text-xs text-red-500">✕</span>}
+              </div>
 
               <div className="mb-3 border dark:border-gray-700 rounded overflow-hidden">
                 {editablePoints[0] && (

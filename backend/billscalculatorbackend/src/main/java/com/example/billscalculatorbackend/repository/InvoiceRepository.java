@@ -16,7 +16,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     @Query("""
         SELECT DISTINCT f FROM Invoice f LEFT JOIN FETCH f.items
         WHERE f.user = :user
-          AND (:name IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%',:name,'%')))
+          AND (CAST(:name AS string) IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
           AND (:paymentType IS NULL OR f.paymentType = :paymentType)
           AND (:status IS NULL OR f.status = :status)
           AND (:dateFrom IS NULL OR f.date >= :dateFrom)
