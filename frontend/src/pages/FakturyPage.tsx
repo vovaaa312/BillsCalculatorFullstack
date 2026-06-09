@@ -5,8 +5,10 @@ import { fmtDate } from '../utils/date'
 import { useSortable } from '../hooks/useSortable'
 import SortableTh from '../components/SortableTh'
 import { getInvoices, createInvoice, updateInvoice, deleteInvoice, importInvoicesPdf, getInvoicePdf } from '../api/faktury'
+import { clearInvoices } from '../api/io'
 import type { Invoice, InvoiceItem, InvoiceFilter, PaymentType, InvoiceStatus } from '../types/faktura'
 import Modal from '../components/Modal'
+import ClearConfirmModal from '../components/ClearConfirmModal'
 
 const inp = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1'
 const inpLg = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-3 py-2 text-sm'
@@ -33,6 +35,8 @@ export default function FakturyPage() {
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [pdfLoading, setPdfLoading] = useState<number | null>(null)
+  const [showClear, setShowClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['invoices', filter],
@@ -67,6 +71,17 @@ export default function FakturyPage() {
   const closePdf = () => {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl)
     setPdfUrl(null)
+  }
+
+  const handleClear = async () => {
+    setClearing(true)
+    try {
+      await clearInvoices()
+      qc.invalidateQueries({ queryKey: ['invoices'] })
+      setShowClear(false)
+    } finally {
+      setClearing(false)
+    }
   }
 
   const toggleExpand = (id: number) => setExpanded(prev => {
@@ -119,8 +134,12 @@ export default function FakturyPage() {
               <input type="file" accept=".pdf" multiple className="hidden" disabled={importMut.isPending}
                 onChange={e => { const files = Array.from(e.target.files ?? []); if (files.length) importMut.mutate(files); e.target.value = '' }} />
             </label>
+            <button onClick={() => setShowClear(true)} className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700">
+              <span className="hidden sm:inline">{t('io.clearBtn')}</span>
+              <span className="sm:hidden">🗑</span>
+            </button>
             <button onClick={() => setEditing(emptyInvoice())} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
-              + <span className="hidden sm:inline">{t('common.save').replace('Uložit','Přidat')}</span>
+              + <span className="hidden sm:inline">{t('invoice.add').replace('+ ','')}</span>
             </button>
           </div>
         </div>
@@ -230,6 +249,10 @@ export default function FakturyPage() {
           <Modal title={editing.id ? t('invoice.edit') : t('invoice.new')} onClose={() => setEditing(null)} wide>
             <InvoiceForm initial={editing} onSave={handleSave} onCancel={() => setEditing(null)} />
           </Modal>
+        )}
+
+        {showClear && (
+          <ClearConfirmModal onConfirm={handleClear} onClose={() => setShowClear(false)} clearing={clearing} />
         )}
 
         {pdfUrl && (

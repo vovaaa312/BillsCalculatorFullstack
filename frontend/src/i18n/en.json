@@ -7,6 +7,7 @@
     "routes": "Routes",
     "report": "Report",
     "io": "I/E",
+    "pokladna": "Archive",
     "logout": "Logout",
     "themeDark": "Dark mode",
     "themeLight": "Light mode",
@@ -150,6 +151,30 @@
     "langRu": "Русский",
     "langUa": "Українська"
   },
+  "pokladna": {
+    "title": "Archive",
+    "noData": "No archived records yet",
+    "create": "Archive current data",
+    "createName": "Archive name (optional)",
+    "createBtn": "Archive",
+    "archiving": "Archiving...",
+    "archiveSuccess": "Archived successfully.",
+    "archiveFail": "Archiving failed.",
+    "deleteConfirm": "Delete this archive record?",
+    "createdAt": "Created",
+    "view": "View",
+    "backToList": "← Back to list",
+    "invoices": "Invoices",
+    "expenses": "Expenses",
+    "cash": "Cash",
+    "driver": "Driver shifts",
+    "downloadJson": "Download JSON",
+    "report": "Download report",
+    "totalInvoices": "Invoice total",
+    "totalExpenses": "Expenses total",
+    "totalCash": "Cash in register",
+    "balance": "Balance"
+  },
   "io": {
     "title": "Import / Export",
     "exportTitle": "Export JSON",
@@ -164,10 +189,12 @@
     "clearBtn": "Delete all",
     "clearing": "Deleting...",
     "clearConfirm": "Really delete all data?",
+    "clearBackupWarning": "Before deleting, we recommend exporting a backup (Export JSON) or creating an archive in Pokladna.",
     "importSuccess": "Import successful.",
     "importFail": "Import failed.",
     "clearSuccess": "Data deleted.",
-    "clearFail": "Deletion failed."
+    "clearFail": "Deletion failed.",
+    "archiveDesc": "Saves a snapshot of all your current data to the archive for later viewing."
   },
   "common": {
     "edit": "Edit",

@@ -7,6 +7,7 @@
     "routes": "Trasy",
     "report": "Report",
     "io": "I/E",
+    "pokladna": "Pokladna",
     "logout": "Odhlásit",
     "themeDark": "Tmavý režim",
     "themeLight": "Světlý režim",
@@ -150,6 +151,30 @@
     "langRu": "Русский",
     "langUa": "Українська"
   },
+  "pokladna": {
+    "title": "Pokladna",
+    "noData": "Žádné záznamy v pokladně",
+    "create": "Archivovat aktuální data",
+    "createName": "Název záznamu (volitelné)",
+    "createBtn": "Archivovat",
+    "archiving": "Archivuji...",
+    "archiveSuccess": "Archivace proběhla úspěšně.",
+    "archiveFail": "Archivace selhala.",
+    "deleteConfirm": "Smazat tento záznam pokladny?",
+    "createdAt": "Vytvořeno",
+    "view": "Zobrazit",
+    "backToList": "← Zpět na seznam",
+    "invoices": "Faktury",
+    "expenses": "Výdaje",
+    "cash": "Hotovost",
+    "driver": "Řidič",
+    "downloadJson": "Stáhnout JSON",
+    "report": "Stáhnout report",
+    "totalInvoices": "Celkem faktury",
+    "totalExpenses": "Celkem výdaje",
+    "totalCash": "Hotovost v pokladně",
+    "balance": "Bilance"
+  },
   "io": {
     "title": "Import / Export",
     "exportTitle": "Export JSON",
@@ -164,10 +189,12 @@
     "clearBtn": "Smazat vše",
     "clearing": "Mazání...",
     "clearConfirm": "Opravdu smazat všechna data?",
+    "clearBackupWarning": "Před smazáním doporučujeme exportovat zálohu dat (Export JSON) nebo vytvořit archiv v Pokladně.",
     "importSuccess": "Import úspěšný.",
     "importFail": "Import se nezdařil.",
     "clearSuccess": "Data vymazána.",
-    "clearFail": "Mazání se nezdařilo."
+    "clearFail": "Mazání se nezdařilo.",
+    "archiveDesc": "Uloží snímek všech aktuálních dat do pokladny pro pozdější prohlížení."
   },
   "common": {
     "edit": "Upravit",

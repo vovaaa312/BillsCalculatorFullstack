@@ -11,10 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IoService {
 
-    private final InvoiceRepository   invoiceRepo;
-    private final ExpenseRepository   expenseRepo;
+    private final InvoiceRepository     invoiceRepo;
+    private final InvoicePdfRepository  invoicePdfRepo;
+    private final ExpenseRepository     expenseRepo;
     private final DriverShiftRepository driverRepo;
-    private final CashRepository      cashRepo;
+    private final CashRepository        cashRepo;
 
     public AppData buildAppData(User user) {
         AppData data = new AppData();
@@ -68,9 +69,37 @@ public class IoService {
 
     @Transactional
     public void clearAll(User user) {
+        invoicePdfRepo.deleteByInvoice_UserId(user.getId());
         invoiceRepo.deleteByUser(user);
         expenseRepo.deleteByUser(user);
         driverRepo.deleteByUser(user);
         cashRepo.deleteByUser(user);
+    }
+
+    @Transactional
+    public void clearInvoices(User user) {
+        invoicePdfRepo.deleteByInvoice_UserId(user.getId());
+        invoiceRepo.deleteByUser(user);
+    }
+
+    @Transactional
+    public void clearExpenses(User user) {
+        expenseRepo.deleteByUser(user);
+    }
+
+    @Transactional
+    public void clearDriverShifts(User user) {
+        driverRepo.deleteByUser(user);
+    }
+
+    @Transactional
+    public void clearCash(User user) {
+        cashRepo.findByUser(user).ifPresent(c -> {
+            c.setCount5000(0); c.setCount2000(0); c.setCount1000(0);
+            c.setCount500(0);  c.setCount200(0);  c.setCount100(0);
+            c.setCount50(0);   c.setCount20(0);   c.setCount10(0);
+            c.setCount5(0);    c.setCount2(0);    c.setCount1(0);
+            cashRepo.save(c);
+        });
     }
 }

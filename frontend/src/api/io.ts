@@ -17,3 +17,7 @@ export const importData = (file: File) => {
 }
 
 export const clearData = () => client.delete('/io/clear')
+export const clearInvoices = () => client.delete('/io/clear-invoices')
+export const clearExpenses = () => client.delete('/io/clear-expenses')
+export const clearDrivers = () => client.delete('/io/clear-drivers')
+export const clearCash = () => client.delete('/io/clear-cash')

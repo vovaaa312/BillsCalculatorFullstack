@@ -5,8 +5,10 @@ import { fmtDateTime } from '../utils/date'
 import { useSortable } from '../hooks/useSortable'
 import SortableTh from '../components/SortableTh'
 import { getShifts, createShift, updateShift, deleteShift } from '../api/driver'
+import { clearDrivers } from '../api/io'
 import type { DriverShift, DriverFilter } from '../types/driver'
 import Modal from '../components/Modal'
+import ClearConfirmModal from '../components/ClearConfirmModal'
 
 const inp = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1'
 const inpLg = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-3 py-2 text-sm'
@@ -25,6 +27,8 @@ export default function DriverPage() {
   const qc = useQueryClient()
   const [filter, setFilter] = useState<DriverFilter>({})
   const [editing, setEditing] = useState<DriverShift | null>(null)
+  const [showClear, setShowClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const { data: shifts = [], isLoading } = useQuery({
     queryKey: ['driver', filter],
@@ -39,6 +43,17 @@ export default function DriverPage() {
   const handleSave = (s: DriverShift) => {
     if (editing?.id) updateMut.mutate({ id: editing.id, s })
     else createMut.mutate(s)
+  }
+
+  const handleClear = async () => {
+    setClearing(true)
+    try {
+      await clearDrivers()
+      qc.invalidateQueries({ queryKey: ['driver'] })
+      setShowClear(false)
+    } finally {
+      setClearing(false)
+    }
   }
 
   const { sorted, sortKey, dir, sortBy } = useSortable(shifts, 'start', 'desc')
@@ -83,6 +98,10 @@ export default function DriverPage() {
               className={`md:hidden px-3 py-2 rounded text-sm border ${hasFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-200 border-gray-300 dark:border-gray-600'}`}
             >
               {hasFilter ? '🔍●' : '🔍'}
+            </button>
+            <button onClick={() => setShowClear(true)} className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700">
+              <span className="hidden sm:inline">{t('io.clearBtn')}</span>
+              <span className="sm:hidden">🗑</span>
             </button>
             <button onClick={() => setEditing(empty())} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
               + <span className="hidden sm:inline">{t('driver.add').replace('+ ','')}</span>
@@ -132,6 +151,10 @@ export default function DriverPage() {
         <Modal title={editing.id ? t('driver.edit') : t('driver.new')} onClose={() => setEditing(null)}>
           <ShiftForm initial={editing} onSave={handleSave} onCancel={() => setEditing(null)} />
         </Modal>
+      )}
+
+      {showClear && (
+        <ClearConfirmModal onConfirm={handleClear} onClose={() => setShowClear(false)} clearing={clearing} />
       )}
     </div>
   )

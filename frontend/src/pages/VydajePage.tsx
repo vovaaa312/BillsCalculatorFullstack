@@ -5,8 +5,10 @@ import { fmtDate } from '../utils/date'
 import { useSortable } from '../hooks/useSortable'
 import SortableTh from '../components/SortableTh'
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/vydaje'
+import { clearExpenses } from '../api/io'
 import type { Expense } from '../types/vydaj'
 import Modal from '../components/Modal'
+import ClearConfirmModal from '../components/ClearConfirmModal'
 
 const inp = 'w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1'
 const emptyExpense = (): Expense => ({ name: '', amount: 0, date: new Date().toISOString().slice(0, 10) })
@@ -45,6 +47,19 @@ export default function VydajePage() {
   const hasFilter = search || minAmount || maxAmount || dateFrom || dateTo
   const clearFilter = () => { setSearch(''); setMinAmount(''); setMaxAmount(''); setDateFrom(''); setDateTo('') }
   const [showFilter, setShowFilter] = useState(false)
+  const [showClear, setShowClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
+
+  const handleClear = async () => {
+    setClearing(true)
+    try {
+      await clearExpenses()
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+      setShowClear(false)
+    } finally {
+      setClearing(false)
+    }
+  }
 
   if (isLoading) return <div className="p-4 dark:text-gray-300">{t('common.loading')}</div>
 
@@ -88,6 +103,10 @@ export default function VydajePage() {
             >
               {hasFilter ? '🔍●' : '🔍'}
             </button>
+            <button onClick={() => setShowClear(true)} className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700">
+              <span className="hidden sm:inline">{t('io.clearBtn')}</span>
+              <span className="sm:hidden">🗑</span>
+            </button>
             <button onClick={() => setEditing(emptyExpense())} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
               + <span className="hidden sm:inline">{t('expense.add').replace('+ ','')}</span>
             </button>
@@ -128,6 +147,10 @@ export default function VydajePage() {
         <Modal title={editing.id ? t('expense.edit') : t('expense.new')} onClose={() => setEditing(null)}>
           <ExpenseForm initial={editing} onSave={handleSave} onCancel={() => setEditing(null)} />
         </Modal>
+      )}
+
+      {showClear && (
+        <ClearConfirmModal onConfirm={handleClear} onClose={() => setShowClear(false)} clearing={clearing} />
       )}
     </div>
   )

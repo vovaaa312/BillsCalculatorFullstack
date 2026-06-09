@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getCash, updateCash } from '../api/hotovost'
+import { clearCash } from '../api/io'
 import type { Cash } from '../types/hotovost'
 import { useState, useEffect } from 'react'
+import ClearConfirmModal from '../components/ClearConfirmModal'
 
 const BANKNOTES: { key: keyof Cash; label: string; value: number }[] = [
   { key: 'count5000', label: '5 000 Kč', value: 5000 },
@@ -57,6 +59,8 @@ export default function HotovostPage() {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: ['cash'], queryFn: getCash })
   const [form, setForm] = useState<Cash>(emptyC())
+  const [showClear, setShowClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
   const updateMut = useMutation({
     mutationFn: updateCash,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cash'] }),
@@ -74,11 +78,28 @@ export default function HotovostPage() {
   const coinsTotal = COINS.reduce((s, d) => s + (Number(form[d.key]) || 0) * d.value, 0)
   const total = banknotesTotal + coinsTotal
 
+  const handleClear = async () => {
+    setClearing(true)
+    try {
+      await clearCash()
+      qc.invalidateQueries({ queryKey: ['cash'] })
+      setShowClear(false)
+    } finally {
+      setClearing(false)
+    }
+  }
+
   if (isLoading) return <div className="p-4 dark:text-gray-300">{t('common.loading')}</div>
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">{t('cash.title')}</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold dark:text-gray-100">{t('cash.title')}</h1>
+        <button onClick={() => setShowClear(true)} className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700">
+          <span className="hidden sm:inline">{t('io.clearBtn')}</span>
+          <span className="sm:hidden">🗑</span>
+        </button>
+      </div>
       <div className="bg-white dark:bg-gray-800 rounded shadow p-6 max-w-sm">
         <div className="space-y-3 mb-4">
           {BANKNOTES.map(d => (
@@ -117,6 +138,10 @@ export default function HotovostPage() {
           </button>
         </div>
       </div>
+
+      {showClear && (
+        <ClearConfirmModal onConfirm={handleClear} onClose={() => setShowClear(false)} clearing={clearing} />
+      )}
     </div>
   )
 }

@@ -40,4 +40,28 @@ public class IoController extends BaseController {
         ioService.clearAll(currentUser());
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/clear-invoices")
+    public ResponseEntity<Void> clearInvoices() {
+        ioService.clearInvoices(currentUser());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/clear-expenses")
+    public ResponseEntity<Void> clearExpenses() {
+        ioService.clearExpenses(currentUser());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/clear-drivers")
+    public ResponseEntity<Void> clearDrivers() {
+        ioService.clearDriverShifts(currentUser());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/clear-cash")
+    public ResponseEntity<Void> clearCash() {
+        ioService.clearCash(currentUser());
+        return ResponseEntity.noContent().build();
+    }
 }
