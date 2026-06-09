@@ -17,6 +17,8 @@ import DriverPage from './pages/DriverPage'
 import ReportPage from './pages/ReportPage'
 import RoutesPage from './pages/RoutesPage'
 import IoPage from './pages/IoPage'
+import PokladnaPage from './pages/PokladnaPage'
+import PokladnaDetailPage from './pages/PokladnaDetailPage'
 import AdminPage from './pages/AdminPage'
 import ProfilePage from './pages/ProfilePage'
 import type { ReactNode } from 'react'
@@ -76,8 +78,10 @@ function AppRoutes() {
           <Route path="driver"   element={<DriverPage />} />
           <Route path="report"   element={<ReportPage />} />
           <Route path="routes"   element={<RoutesPage />} />
-          <Route path="io"       element={<IoPage />} />
-          <Route path="profile"  element={<ProfilePage />} />
+          <Route path="io"              element={<IoPage />} />
+          <Route path="pokladna"        element={<PokladnaPage />} />
+          <Route path="pokladna/:id"    element={<PokladnaDetailPage />} />
+          <Route path="profile"         element={<ProfilePage />} />
           <Route path="admin"    element={<AdminRoute><AdminPage /></AdminRoute>} />
         </Route>
       </Route>
@@ -89,6 +93,7 @@ function AppRoutes() {
       <Route path="/report"   element={<LangRedirect page="report" />} />
       <Route path="/routes"   element={<LangRedirect page="routes" />} />
       <Route path="/io"       element={<LangRedirect page="io" />} />
+      <Route path="/pokladna" element={<LangRedirect page="pokladna" />} />
       <Route path="/profile"  element={<LangRedirect page="profile" />} />
       <Route path="/admin"    element={<LangRedirect page="admin" />} />
 

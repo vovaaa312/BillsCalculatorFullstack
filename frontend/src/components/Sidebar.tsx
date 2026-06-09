@@ -30,6 +30,7 @@ export default function Sidebar({ onClose }: Props) {
     { to: `/${lang}/routes`,   label: t('nav.routes'),     icon: '🗺️' },
     { to: `/${lang}/report`,   label: t('nav.report'),     icon: '📊' },
     { to: `/${lang}/io`,       label: t('nav.io'),         icon: '📂' },
+    { to: `/${lang}/pokladna`, label: t('nav.pokladna'),   icon: '🗄️' },
     ...(isAdmin ? [{ to: `/${lang}/admin`, label: t('nav.admin'), icon: '🛡️' }] : []),
     { to: `/${lang}/profile`,  label: t('nav.profile'),    icon: '👤' },
   ]

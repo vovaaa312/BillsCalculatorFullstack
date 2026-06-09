@@ -26,4 +26,14 @@ public class ReportService {
     public byte[] buildPdf(User user, String lang) throws Exception {
         return PdfExporter.export(buildText(user, lang));
     }
+
+    public byte[] buildPdfFromData(AppData data, String lang) throws Exception {
+        ReportStrings strings = switch (lang.toLowerCase()) {
+            case "en" -> new EnglishReportStrings();
+            case "ru" -> new RussianReportStrings();
+            case "ua" -> new UkrainianReportStrings();
+            default  -> new CzechReportStrings();
+        };
+        return PdfExporter.export(ReportBuilder.build(data, strings));
+    }
 }
