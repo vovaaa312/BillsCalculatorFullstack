@@ -17,12 +17,12 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         SELECT DISTINCT f FROM Invoice f LEFT JOIN FETCH f.items
         WHERE f.user = :user
           AND (CAST(:name AS string) IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
-          AND (:paymentType IS NULL OR f.paymentType = :paymentType)
-          AND (:status IS NULL OR f.status = :status)
-          AND (:dateFrom IS NULL OR f.date >= :dateFrom)
-          AND (:dateTo IS NULL OR f.date <= :dateTo)
-          AND (:amountMin IS NULL OR f.amount >= :amountMin)
-          AND (:amountMax IS NULL OR f.amount <= :amountMax)
+          AND (CAST(:paymentType AS string) IS NULL OR f.paymentType = :paymentType)
+          AND (CAST(:status AS string) IS NULL OR f.status = :status)
+          AND (CAST(:dateFrom AS date) IS NULL OR f.date >= :dateFrom)
+          AND (CAST(:dateTo AS date) IS NULL OR f.date <= :dateTo)
+          AND (CAST(:amountMin AS integer) IS NULL OR f.amount >= :amountMin)
+          AND (CAST(:amountMax AS integer) IS NULL OR f.amount <= :amountMax)
         ORDER BY f.date DESC
     """)
     List<Invoice> findFiltered(
