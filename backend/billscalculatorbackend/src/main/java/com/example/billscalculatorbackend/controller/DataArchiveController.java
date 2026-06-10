@@ -45,6 +45,14 @@ public class DataArchiveController extends BaseController {
                 .body(pdf);
     }
 
+    @GetMapping(value = "/{id}/pdf/{invoiceId}", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> getPdf(@PathVariable Long id, @PathVariable Long invoiceId) {
+        byte[] data = archiveService.getPdf(currentUser(), id, invoiceId);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "inline; filename=invoice.pdf")
+                .body(data);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         archiveService.delete(currentUser(), id);

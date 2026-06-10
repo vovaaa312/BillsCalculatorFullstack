@@ -22,6 +22,8 @@ public class JsonIO {
         for (int i = 0; i < fList.size(); i++) {
             Invoice f = fList.get(i);
             sb.append("    {\n");
+            sb.append("      \"id\": ").append(f.getId() != null ? f.getId() : 0).append(",\n");
+            sb.append("      \"hasPdf\": ").append(Boolean.TRUE.equals(f.getHasPdf())).append(",\n");
             sb.append("      \"nazev\": ").append(jsonStr(f.getName())).append(",\n");
             sb.append("      \"castka\": ").append(f.getAmount()).append(",\n");
             sb.append("      \"typ\": ").append(jsonStr(f.getPaymentType().name())).append(",\n");

@@ -20,6 +20,8 @@ export interface ArchiveInvoiceItem {
 }
 
 export interface ArchiveInvoice {
+  id?: number
+  hasPdf?: boolean
   nazev: string
   castka: number
   typ: 'HOTOVOST' | 'PREVOD'

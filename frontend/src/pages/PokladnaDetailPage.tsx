@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getArchiveDetail, downloadArchiveReport } from '../api/archives'
+import { getArchiveDetail, downloadArchiveReport, getArchivePdf } from '../api/archives'
 import type { ArchiveAppData, ArchiveInvoice, ArchiveDriverShift } from '../types/archive'
+import Modal from '../components/Modal'
 
 const LANGS = [
   { code: 'cs', label: 'Čeština' },
@@ -26,7 +27,10 @@ function fmtDateTime(dt: string): string {
   return new Date(dt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
 }
 
-function InvoiceRow({ inv }: { inv: ArchiveInvoice }) {
+function InvoiceRow({ inv, onViewPdf }: {
+  inv: ArchiveInvoice
+  onViewPdf?: (invoiceId: number) => void
+}) {
   const [open, setOpen] = useState(false)
   const { t } = useTranslation()
   return (
@@ -58,13 +62,23 @@ function InvoiceRow({ inv }: { inv: ArchiveInvoice }) {
             {inv.status === 'SPLNENA' ? t('invoice.statusDone') : t('invoice.statusPending')}
           </span>
         </td>
+        <td className="py-2 px-3 text-center" onClick={e => e.stopPropagation()}>
+          {inv.hasPdf && inv.id && onViewPdf && (
+            <button
+              onClick={() => onViewPdf(inv.id!)}
+              className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium"
+            >
+              PDF
+            </button>
+          )}
+        </td>
         <td className="py-2 px-3 text-xs text-gray-400 dark:text-gray-500 text-center">
           {open ? '▲' : '▼'}
         </td>
       </tr>
       {open && inv.polozky.length > 0 && (
         <tr className="bg-gray-50 dark:bg-gray-900">
-          <td colSpan={6} className="px-6 pb-3 pt-1">
+          <td colSpan={7} className="px-6 pb-3 pt-1">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -96,6 +110,8 @@ export default function PokladnaDetailPage() {
   const { lang = 'en', id } = useParams<{ lang: string; id: string }>()
   const [reportLang, setReportLang] = useState(i18n.language)
   const [downloading, setDownloading] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   const { data: detail, isLoading, isError } = useQuery({
     queryKey: ['archiveDetail', id],
@@ -112,6 +128,22 @@ export default function PokladnaDetailPage() {
     if (!id) return
     setDownloading(true)
     try { await downloadArchiveReport(Number(id), reportLang) } finally { setDownloading(false) }
+  }
+
+  const handleViewPdf = async (invoiceId: number) => {
+    if (!id) return
+    setPdfLoading(true)
+    try {
+      const blob = await getArchivePdf(Number(id), invoiceId)
+      setPdfUrl(URL.createObjectURL(blob))
+    } finally {
+      setPdfLoading(false)
+    }
+  }
+
+  const closePdf = () => {
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl)
+    setPdfUrl(null)
   }
 
   const handleDownloadJson = () => {
@@ -210,65 +242,70 @@ export default function PokladnaDetailPage() {
                   <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('invoice.colTotal')}</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('invoice.colPayment')}</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('invoice.colStatus')}</th>
+                  <th className="py-2 px-3 w-12 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                    {pdfLoading ? '...' : 'PDF'}
+                  </th>
                   <th className="py-2 px-3 w-8"></th>
                 </tr>
               </thead>
               <tbody>
-                {faktury.map((inv, i) => <InvoiceRow key={i} inv={inv} />)}
+                {faktury.map((inv, i) => <InvoiceRow key={i} inv={inv} onViewPdf={handleViewPdf} />)}
               </tbody>
             </table>
           </div>
         </section>
       )}
 
-      {vydaje.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">
-            {t('pokladna.expenses')} ({vydaje.length})
-          </h2>
-          <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-100 dark:bg-gray-700">
-                <tr>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('expense.colName')}</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('expense.colAmount')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vydaje.map((v, i) => (
+      <section className="mb-6">
+        <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">
+          {t('pokladna.expenses')} ({vydaje.length})
+        </h2>
+        <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('expense.colName')}</th>
+                <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('expense.colAmount')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vydaje.length === 0
+                ? <tr><td colSpan={2} className="py-4 text-center text-sm text-gray-400 dark:text-gray-500">{t('expense.noData')}</td></tr>
+                : vydaje.map((v, i) => (
                   <tr key={i} className="border-b border-gray-100 dark:border-gray-700">
                     <td className="py-2 px-3 text-sm text-gray-700 dark:text-gray-200">{v.nazev}</td>
                     <td className="py-2 px-3 text-sm text-right text-gray-700 dark:text-gray-200">
                       {v.castka.toLocaleString()} {t('common.currency')}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      {shifts.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">
-            {t('pokladna.driver')} ({shifts.length})
-          </h2>
-          <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-100 dark:bg-gray-700">
-                <tr>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colDriver')}</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colStart')}</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colEnd')}</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colKm')}</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colHours')}</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colRate')}</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colEarnings')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shifts.map((d, i) => {
+      <section className="mb-6">
+        <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">
+          {t('pokladna.driver')} ({shifts.length})
+        </h2>
+        <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colDriver')}</th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colStart')}</th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colEnd')}</th>
+                <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colKm')}</th>
+                <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colHours')}</th>
+                <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colRate')}</th>
+                <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400">{t('driver.colEarnings')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shifts.length === 0
+                ? <tr><td colSpan={7} className="py-4 text-center text-sm text-gray-400 dark:text-gray-500">{t('driver.noData')}</td></tr>
+                : shifts.map((d, i) => {
                   const h = shiftHours(d)
                   return (
                     <tr key={i} className="border-b border-gray-100 dark:border-gray-700">
@@ -283,8 +320,10 @@ export default function PokladnaDetailPage() {
                       </td>
                     </tr>
                   )
-                })}
-              </tbody>
+                })
+              }
+            </tbody>
+            {shifts.length > 0 && (
               <tfoot className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <td colSpan={6} className="py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-200 text-right">
@@ -295,10 +334,10 @@ export default function PokladnaDetailPage() {
                   </td>
                 </tr>
               </tfoot>
-            </table>
-          </div>
-        </section>
-      )}
+            )}
+          </table>
+        </div>
+      </section>
 
       {hotovost && (
         <section className="mb-6">
@@ -314,6 +353,12 @@ export default function PokladnaDetailPage() {
             </div>
           </div>
         </section>
+      )}
+
+      {pdfUrl && (
+        <Modal title="PDF" onClose={closePdf} fullWidth>
+          <iframe src={pdfUrl} className="w-full border-0 rounded" style={{ height: '75vh' }} title="Invoice PDF" />
+        </Modal>
       )}
     </div>
   )

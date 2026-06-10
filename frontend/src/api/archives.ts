@@ -13,6 +13,10 @@ export const getArchiveDetail = (id: number) =>
 export const deleteArchive = (id: number) =>
   client.delete(`/archives/${id}`)
 
+export const getArchivePdf = (archiveId: number, invoiceId: number) =>
+  client.get(`/archives/${archiveId}/pdf/${invoiceId}`, { responseType: 'blob' })
+    .then(r => r.data as Blob)
+
 export const downloadArchiveReport = async (id: number, lang: string) => {
   const response = await client.get(`/archives/${id}/report`, {
     params: { lang },
