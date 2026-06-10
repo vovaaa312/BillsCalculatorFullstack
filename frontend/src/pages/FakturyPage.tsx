@@ -37,6 +37,7 @@ export default function FakturyPage() {
   const [pdfLoading, setPdfLoading] = useState<number | null>(null)
   const [showClear, setShowClear] = useState(false)
   const [clearing, setClearing] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['invoices', filter],
@@ -73,6 +74,13 @@ export default function FakturyPage() {
     setPdfUrl(null)
   }
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf')
+    if (files.length) importMut.mutate(files)
+  }
+
   const handleClear = async () => {
     setClearing(true)
     try {
@@ -98,7 +106,20 @@ export default function FakturyPage() {
   if (isLoading) return <div className="p-4 dark:text-gray-300">{t('common.loading')}</div>
 
   return (
-    <div className="flex gap-4 items-start">
+    <div
+      className="flex gap-4 items-start"
+      onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false) }}
+      onDrop={handleDrop}
+    >
+      {dragOver && (
+        <div className="fixed inset-0 z-50 bg-purple-600/20 border-4 border-dashed border-purple-500 flex items-center justify-center pointer-events-none">
+          <div className="bg-white dark:bg-gray-800 rounded-xl px-8 py-6 shadow-xl text-center">
+            <p className="text-2xl mb-1">📄</p>
+            <p className="text-lg font-semibold dark:text-gray-100">{t('invoice.importPdfFull')} PDF</p>
+          </div>
+        </div>
+      )}
       <div className="hidden md:block w-60 shrink-0">
         <FilterPanel filter={filter} onChange={setFilter} onClear={() => setFilter({})} />
       </div>
