@@ -32,6 +32,9 @@ Každý uživatel se registruje s e-mailem a heslem, data jsou oddělená per-ú
 ```env
 POSTGRES_PASSWORD=silne-heslo
 JWT_SECRET=nahodny-retezec-minimalne-32-znaku
+
+# Volitelné — pouze pokud používáš Cloudflare Named Tunnel (viz sekce níže)
+CF_TUNNEL_TOKEN=
 ```
 
 ### 2. Spusť kontejnery
@@ -70,6 +73,90 @@ docker compose up -d --build backend
 # Oboje (zachová databázi)
 docker compose up -d --build frontend backend
 ```
+
+---
+
+## Přístup z telefonu přes Tailscale (doporučeno pro osobní použití)
+
+Tailscale vytvoří privátní síť mezi tvými zařízeními — bez otevřených portů, bez domény, bez konfigurace routeru.
+
+### Co je potřeba udělat jednou
+
+1. **Na počítači (server):** nainstaluj a přihlaš se do [Tailscale](https://tailscale.com/download)
+2. **Na telefonu:** nainstaluj Tailscale (Android / iOS) a přihlaš se **stejným účtem**
+3. Hotovo — žádná další konfigurace není potřeba
+
+### Jak se připojit z telefonu
+
+Zjisti Tailscale IP adresu serveru:
+
+```powershell
+tailscale ip -4
+```
+
+Otevři v prohlížeči telefonu:
+
+```
+http://<tailscale-ip>
+```
+
+### Statická adresa přes MagicDNS
+
+Místo IP adresy lze používat hostname počítače — přejdi na [tailscale.com/admin/machines](https://tailscale.com/admin/machines) a v nastavení účtu zapni **MagicDNS**. Pak bude aplikace dostupná na adrese:
+
+```
+http://<jmeno-pocitace>.<tailnet-name>.ts.net
+```
+
+Tato adresa se nemění ani po restartu.
+
+> **Poznámka:** Aplikace běží na portu 80. Docker ji vystavuje na všech síťových rozhraních (`0.0.0.0:80`), takže Tailscale ji vidí automaticky bez jakýchkoliv změn v `docker-compose.yml`.
+
+---
+
+## Zpřístupnění přes Cloudflare Named Tunnel (statická doména, automatický start)
+
+Pokud chceš, aby aplikace byla dostupná na pevné URL (`https://bills.tvojadomena.com`) pokaždé, když spustíš kontejnery — použij Named Tunnel. Tunnel token uložíš jednou do `.env` a cloudflared kontejner se spustí automaticky spolu s aplikací.
+
+### Předpoklady
+
+- Doména přidaná do Cloudflare (DNS spravuje Cloudflare)
+- Účet na [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) (zdarma)
+
+### 1. Vytvoř tunnel v Cloudflare dashboardu
+
+1. Přejdi na **Zero Trust → Networks → Tunnels → Create a tunnel**
+2. Typ: **Cloudflared** → dej mu název (např. `bills-calculator`) → Next
+3. Na obrazovce "Install connector" **zkopíruj token** z příkazu — je to část za `--token` (dlouhý řetězec)
+4. Přejdi na **Public Hostname → Add a public hostname**:
+   - Subdomain: `bills` (nebo cokoliv)
+   - Domain: tvoje doména spravovaná přes Cloudflare
+   - Service type: `HTTP`, URL: `frontend:80`
+5. Ulož
+
+### 2. Přidej token do `.env`
+
+```env
+CF_TUNNEL_TOKEN=eyJhIjoiX...celý token...
+```
+
+### 3. Spusť kontejnery včetně tunelu
+
+```bash
+docker compose --profile tunnel up -d
+```
+
+Nebo pokud chceš mít tunnel vždy zapnutý (přidej `--profile tunnel` do každého příkazu), nastav `COMPOSE_PROFILES=tunnel` v `.env`:
+
+```env
+COMPOSE_PROFILES=tunnel
+```
+
+Pak stačí běžné `docker compose up -d` — cloudflared se spustí automaticky.
+
+Aplikace bude dostupná na `https://bills.tvojadomena.com`.
+
+> **Poznámka:** Na rozdíl od Quick Tunnel je URL vždy stejná a tunnel se obnoví automaticky i po restartu systému (`restart: unless-stopped`).
 
 ---
 
@@ -200,6 +287,9 @@ Each user registers with an email and password; data is isolated per account. Th
 ```env
 POSTGRES_PASSWORD=strong-password
 JWT_SECRET=random-string-at-least-32-chars
+
+# Optional — only needed if you use Cloudflare Named Tunnel (see section below)
+CF_TUNNEL_TOKEN=
 ```
 
 ### 2. Start containers
@@ -238,6 +328,90 @@ docker compose up -d --build backend
 # Both (preserves database)
 docker compose up -d --build frontend backend
 ```
+
+---
+
+## Access from phone via Tailscale (recommended for personal use)
+
+Tailscale creates a private network between your devices — no open ports, no domain, no router config needed.
+
+### One-time setup
+
+1. **On the server (PC):** install and log in to [Tailscale](https://tailscale.com/download)
+2. **On the phone:** install Tailscale (Android / iOS) and log in with **the same account**
+3. Done — no further configuration needed
+
+### How to connect from the phone
+
+Get the Tailscale IP of the server:
+
+```powershell
+tailscale ip -4
+```
+
+Open in the phone browser:
+
+```
+http://<tailscale-ip>
+```
+
+### Static address via MagicDNS
+
+Instead of the IP you can use the computer's hostname — go to [tailscale.com/admin/machines](https://tailscale.com/admin/machines) and enable **MagicDNS** in account settings. The app will then be available at:
+
+```
+http://<machine-name>.<tailnet-name>.ts.net
+```
+
+This address never changes even after a reboot.
+
+> **Note:** The app runs on port 80. Docker binds it to all network interfaces (`0.0.0.0:80`), so Tailscale can reach it automatically with no changes to `docker-compose.yml`.
+
+---
+
+## Public access via Cloudflare Named Tunnel (static domain, automatic start)
+
+If you want the app available at a fixed URL (`https://bills.yourdomain.com`) every time you start the containers — use a Named Tunnel. Store the tunnel token once in `.env` and the cloudflared container starts automatically alongside the app.
+
+### Prerequisites
+
+- A domain added to Cloudflare (DNS managed by Cloudflare)
+- A [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) account (free plan works)
+
+### 1. Create a tunnel in the Cloudflare dashboard
+
+1. Go to **Zero Trust → Networks → Tunnels → Create a tunnel**
+2. Type: **Cloudflared** → name it (e.g. `bills-calculator`) → Next
+3. On the "Install connector" screen **copy the token** from the command — it's the long string after `--token`
+4. Go to **Public Hostname → Add a public hostname**:
+   - Subdomain: `bills` (or anything you like)
+   - Domain: your Cloudflare-managed domain
+   - Service type: `HTTP`, URL: `frontend:80`
+5. Save
+
+### 2. Add the token to `.env`
+
+```env
+CF_TUNNEL_TOKEN=eyJhIjoiX...full token...
+```
+
+### 3. Start containers including the tunnel
+
+```bash
+docker compose --profile tunnel up -d
+```
+
+To always start the tunnel without specifying the profile every time, add `COMPOSE_PROFILES=tunnel` to `.env`:
+
+```env
+COMPOSE_PROFILES=tunnel
+```
+
+Then plain `docker compose up -d` starts cloudflared automatically.
+
+The app will be available at `https://bills.yourdomain.com`.
+
+> **Note:** Unlike Quick Tunnel, the URL is always the same and the tunnel reconnects automatically after a system reboot (`restart: unless-stopped`).
 
 ---
 

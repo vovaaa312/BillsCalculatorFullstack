@@ -39,8 +39,24 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
       - backend
+
+  # Optional: Cloudflare Named Tunnel — static public domain.
+  # Requires CF_TUNNEL_TOKEN in .env. Remove or comment out if not needed.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN:-}
+    depends_on:
+      - frontend
+    profiles:
+      - tunnel
 
 volumes:
   pg_data:

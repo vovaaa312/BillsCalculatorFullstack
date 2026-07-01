@@ -17,6 +17,9 @@ Thumbs.db
 # Secrets
 .env
 
+# TLS certificates (machine-specific, never commit private keys)
+certs/
+
 # Private docs (credentials screenshots, etc.)
 docs/private/
 docs/node_modules/
