@@ -28,7 +28,27 @@
       "PowerShell(dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart 2>&1)",
       "PowerShell(& \"$env:ProgramFiles\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker.exe\" --version 2>&1)",
       "PowerShell(Start-Process powershell -Verb RunAs -ArgumentList \"-NoExit -Command `\"wsl --update; wsl --set-default-version 2; Write-Host 'Done!' -ForegroundColor Green; Read-Host 'Press Enter to close'`\"\" 2>&1)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git push *)",
+      "Bash(git stash *)",
+      "Bash(git commit -m 'feat: lazy-load PDF storage in archive *)",
+      "Bash(git commit -m 'feat: drag-and-drop PDF import on Faktury page *)",
+      "Bash(tailscale ip *)",
+      "Bash(tailscale status *)",
+      "Bash(netstat -ano)",
+      "PowerShell($result = Test-NetConnection -ComputerName 100.90.116.118 -Port 80 -WarningAction SilentlyContinue; \"TcpTestSucceeded: $\\($result.TcpTestSucceeded\\)\")",
+      "Bash(tailscale cert *)",
+      "PowerShell(Start-Sleep -Seconds 3; $result = Test-NetConnection -ComputerName 100.90.116.118 -Port 443 -WarningAction SilentlyContinue; \"HTTPS \\(443\\) reachable: $\\($result.TcpTestSucceeded\\)\")",
+      "Bash(nslookup desktop-7b69h01.tailc048d1.ts.net 100.100.100.100)",
+      "Bash(nslookup desktop-7b69h01.tailc048d1.ts.net 199.247.155.53)",
+      "Bash(nslookup -type=A desktop-7b69h01.tailc048d1.ts.net 199.247.155.53)",
+      "Bash(nslookup -type=AAAA desktop-7b69h01.tailc048d1.ts.net 199.247.155.53)",
+      "Bash(docker run *)",
+      "Bash(mkdir \"d:\\\\coding\\\\pet projects\\\\BillsCalculatorFullStack\\\\frontend\\\\public\")",
+      "Bash(copy \"d:\\\\coding\\\\pet projects\\\\BillsCalculatorFullStack\\\\frontend\\\\logo.jpg\" \"d:\\\\coding\\\\pet projects\\\\BillsCalculatorFullStack\\\\frontend\\\\public\\\\logo.jpg\")",
+      "PowerShell(docker compose exec frontend sh -c \"cat /usr/share/nginx/html/index.html\")",
+      "PowerShell(docker compose exec frontend sh -c \"ls /usr/share/nginx/html/assets/\")",
+      "Bash(git commit *)"
     ]
   }
 }
