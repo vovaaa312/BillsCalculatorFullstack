@@ -33,6 +33,8 @@ function getStoredLang() {
 }
 
 function LangRedirect({ page }: { page: string }) {
+  const { token } = useAuth()
+  if (!token) return <Navigate to="/login" replace />
   return <Navigate to={`/${getStoredLang()}/${page}`} replace />
 }
 
