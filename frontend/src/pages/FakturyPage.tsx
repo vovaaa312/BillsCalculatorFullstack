@@ -278,6 +278,9 @@ export default function FakturyPage() {
 
         {pdfUrl && (
           <Modal title="PDF" onClose={closePdf} fullWidth>
+            <div className="flex justify-end mb-2">
+              <a href={pdfUrl} download="invoice.pdf" className="text-sm text-blue-500 hover:underline">⬇ Download PDF</a>
+            </div>
             <iframe src={pdfUrl} className="w-full border-0 rounded" style={{ height: '75vh' }} title="Invoice PDF" />
           </Modal>
         )}
