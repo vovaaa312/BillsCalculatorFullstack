@@ -1,5 +1,6 @@
 package com.example.billscalculatorbackend.controller;
 
+import com.example.billscalculatorbackend.annotation.Audit;
 import com.example.billscalculatorbackend.dto.DriverFilterDto;
 import com.example.billscalculatorbackend.model.DriverShift;
 import com.example.billscalculatorbackend.service.DriverService;
@@ -28,16 +29,19 @@ public class DriverController extends BaseController {
     }
 
     @PostMapping
+    @Audit(action = "CREATE_DRIVER_SHIFT", entityType = "DRIVER_SHIFT")
     public ResponseEntity<DriverShift> create(@RequestBody DriverShift shift) {
         return ResponseEntity.status(201).body(driverService.create(currentUser(), shift));
     }
 
     @PutMapping("/{id}")
+    @Audit(action = "UPDATE_DRIVER_SHIFT", entityType = "DRIVER_SHIFT")
     public DriverShift update(@PathVariable Long id, @RequestBody DriverShift shift) {
         return driverService.update(currentUser(), id, shift);
     }
 
     @DeleteMapping("/{id}")
+    @Audit(action = "DELETE_DRIVER_SHIFT", entityType = "DRIVER_SHIFT")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         driverService.delete(currentUser(), id);
         return ResponseEntity.noContent().build();

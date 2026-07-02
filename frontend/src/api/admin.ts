@@ -15,6 +15,37 @@ export interface RegRequest {
   createdAt: string
 }
 
+export interface AuditLog {
+  id: number
+  userEmail: string | null
+  action: string
+  entityType: string | null
+  entityId: string | null
+  status: 'SUCCESS' | 'FAILURE'
+  ipAddress: string | null
+  details: string | null
+  category: 'SECURITY' | 'ACTIVITY'
+  timestamp: string
+}
+
+export interface AuditLogPage {
+  content: AuditLog[]
+  totalElements: number
+  totalPages: number
+  number: number
+}
+
+export interface AuditLogFilter {
+  userEmail?: string
+  action?: string
+  category?: string
+  status?: string
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  size?: number
+}
+
 export const getUsers = () => client.get<AdminUser[]>('/admin/users').then(r => r.data)
 export const getPendingRequests = () => client.get<RegRequest[]>('/admin/requests').then(r => r.data)
 export const approveRequest = (id: number) => client.post(`/admin/requests/${id}/approve`)
@@ -40,3 +71,9 @@ export const restoreBackup = async (file: File): Promise<{ restored: number; ski
   const res = await client.post('/admin/restore', json)
   return res.data
 }
+
+export const getAuditLogs = (filter: AuditLogFilter = {}) =>
+  client.get<AuditLogPage>('/admin/audit-logs', { params: filter }).then(r => r.data)
+
+export const clearActivityLogs = () => client.delete('/admin/audit-logs/activity')
+export const clearAllLogs = () => client.delete('/admin/audit-logs/all')

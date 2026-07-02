@@ -207,7 +207,9 @@
     "currency": "CZK",
     "records": "records",
     "noResults": "No results",
-    "deleteConfirm": "Are you sure you want to delete this item?"
+    "deleteConfirm": "Are you sure you want to delete this item?",
+    "prev": "Prev",
+    "next": "Next"
   },
   "admin": {
     "title": "User Management",
@@ -230,7 +232,32 @@
     "disable": "Disable",
     "deleteConfirm": "Really delete this user?",
     "filterRoleAll": "All roles",
-    "filterStatusAll": "All statuses"
+    "filterStatusAll": "All statuses",
+    "tabUsers": "Users",
+    "tabAudit": "Audit Logs"
+  },
+  "audit": {
+    "filterEmail": "User email...",
+    "filterAction": "All actions",
+    "filterCategory": "All categories",
+    "filterStatus": "All statuses",
+    "categorySecurity": "Security",
+    "categoryActivity": "Activity",
+    "statusSuccess": "Success",
+    "statusFailure": "Failure",
+    "colTimestamp": "Time",
+    "colUser": "User",
+    "colAction": "Action",
+    "colCategory": "Category",
+    "colStatus": "Status",
+    "colIp": "IP",
+    "viewDetails": "Details",
+    "noLogs": "No logs found",
+    "detailTitle": "Log Entry",
+    "clearActivity": "Clear activity logs",
+    "clearAll": "Clear all logs",
+    "clearActivityConfirm": "Delete all activity logs? Security logs will be kept.",
+    "clearAllConfirm": "Delete ALL logs including security logs? This cannot be undone."
   },
   "profile": {
     "title": "Profile",

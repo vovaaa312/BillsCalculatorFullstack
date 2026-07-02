@@ -1,5 +1,6 @@
 package com.example.billscalculatorbackend.controller;
 
+import com.example.billscalculatorbackend.annotation.Audit;
 import com.example.billscalculatorbackend.dto.InvoiceFilterDto;
 import com.example.billscalculatorbackend.model.Invoice;
 import com.example.billscalculatorbackend.service.InvoiceService;
@@ -34,22 +35,26 @@ public class InvoiceController extends BaseController {
     }
 
     @PostMapping
+    @Audit(action = "CREATE_INVOICE", entityType = "INVOICE")
     public ResponseEntity<Invoice> create(@RequestBody Invoice invoice) {
         return ResponseEntity.status(201).body(invoiceService.create(currentUser(), invoice));
     }
 
     @PutMapping("/{id}")
+    @Audit(action = "UPDATE_INVOICE", entityType = "INVOICE")
     public Invoice update(@PathVariable Long id, @RequestBody Invoice invoice) {
         return invoiceService.update(currentUser(), id, invoice);
     }
 
     @DeleteMapping("/{id}")
+    @Audit(action = "DELETE_INVOICE", entityType = "INVOICE")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         invoiceService.delete(currentUser(), id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/import-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Audit(action = "IMPORT_INVOICE_PDF", entityType = "INVOICE")
     public ResponseEntity<List<Invoice>> importPdf(@RequestParam("file") MultipartFile file) throws Exception {
         byte[] pdfBytes = file.getBytes();
         List<Invoice> parsed = pdfParserService.parseUpload(file);

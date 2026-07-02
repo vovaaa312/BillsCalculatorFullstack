@@ -1,6 +1,8 @@
 package com.example.billscalculatorbackend.controller;
 
+import com.example.billscalculatorbackend.annotation.Audit;
 import com.example.billscalculatorbackend.dto.ChangePasswordRequest;
+import com.example.billscalculatorbackend.model.LogCategory;
 import com.example.billscalculatorbackend.model.User;
 import com.example.billscalculatorbackend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ public class ProfileController {
     @GetMapping("/me")
     public ResponseEntity<?> me() {
         User u = currentUser();
-        boolean hasPassword = u.getPassword() != null && !u.getPassword().isBlank();
+        boolean hasPassword = u.getPassword() != null && !u.getPassword().trim().isEmpty();
         return ResponseEntity.ok(Map.of(
                 "email", u.getEmail(),
                 "role", u.getRole() != null ? u.getRole().name() : "USER",
@@ -37,6 +39,7 @@ public class ProfileController {
     }
 
     @PutMapping("/password")
+    @Audit(action = "PASSWORD_CHANGE", category = LogCategory.SECURITY)
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest req) {
         User u = currentUser();
         if (!encoder.matches(req.getOldPassword(), u.getPassword()))

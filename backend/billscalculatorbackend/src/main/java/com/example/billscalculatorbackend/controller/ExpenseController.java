@@ -1,5 +1,6 @@
 package com.example.billscalculatorbackend.controller;
 
+import com.example.billscalculatorbackend.annotation.Audit;
 import com.example.billscalculatorbackend.model.Expense;
 import com.example.billscalculatorbackend.service.ExpenseService;
 import com.example.billscalculatorbackend.service.UserService;
@@ -25,16 +26,19 @@ public class ExpenseController extends BaseController {
     }
 
     @PostMapping
+    @Audit(action = "CREATE_EXPENSE", entityType = "EXPENSE")
     public ResponseEntity<Expense> create(@RequestBody Expense expense) {
         return ResponseEntity.status(201).body(expenseService.create(currentUser(), expense));
     }
 
     @PutMapping("/{id}")
+    @Audit(action = "UPDATE_EXPENSE", entityType = "EXPENSE")
     public Expense update(@PathVariable Long id, @RequestBody Expense expense) {
         return expenseService.update(currentUser(), id, expense);
     }
 
     @DeleteMapping("/{id}")
+    @Audit(action = "DELETE_EXPENSE", entityType = "EXPENSE")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         expenseService.delete(currentUser(), id);
         return ResponseEntity.noContent().build();

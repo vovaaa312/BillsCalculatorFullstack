@@ -207,7 +207,9 @@
     "currency": "Kč",
     "records": "záznamů",
     "noResults": "Žádné výsledky",
-    "deleteConfirm": "Opravdu chcete smazat tuto položku?"
+    "deleteConfirm": "Opravdu chcete smazat tuto položku?",
+    "prev": "Předchozí",
+    "next": "Další"
   },
   "admin": {
     "title": "Správa uživatelů",
@@ -230,7 +232,32 @@
     "disable": "Deaktivovat",
     "deleteConfirm": "Opravdu smazat tohoto uživatele?",
     "filterRoleAll": "Všechny role",
-    "filterStatusAll": "Všechny stavy"
+    "filterStatusAll": "Všechny stavy",
+    "tabUsers": "Uživatelé",
+    "tabAudit": "Protokol"
+  },
+  "audit": {
+    "filterEmail": "E-mail uživatele...",
+    "filterAction": "Všechny akce",
+    "filterCategory": "Všechny kategorie",
+    "filterStatus": "Všechny stavy",
+    "categorySecurity": "Bezpečnost",
+    "categoryActivity": "Aktivita",
+    "statusSuccess": "Úspěch",
+    "statusFailure": "Chyba",
+    "colTimestamp": "Čas",
+    "colUser": "Uživatel",
+    "colAction": "Akce",
+    "colCategory": "Kategorie",
+    "colStatus": "Stav",
+    "colIp": "IP",
+    "viewDetails": "Detail",
+    "noLogs": "Žádné záznamy",
+    "detailTitle": "Záznam",
+    "clearActivity": "Smazat aktivitu",
+    "clearAll": "Smazat vše",
+    "clearActivityConfirm": "Smazat záznamy aktivity? Bezpečnostní záznamy zůstanou.",
+    "clearAllConfirm": "Smazat VŠECHNY záznamy včetně bezpečnostních? Tuto akci nelze vrátit."
   },
   "profile": {
     "title": "Profil",

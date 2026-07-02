@@ -207,7 +207,9 @@
     "currency": "CZK",
     "records": "записів",
     "noResults": "Немає результатів",
-    "deleteConfirm": "Ви впевнені, що хочете видалити цей елемент?"
+    "deleteConfirm": "Ви впевнені, що хочете видалити цей елемент?",
+    "prev": "Назад",
+    "next": "Вперед"
   },
   "auth": {
     "login": "Увійти",
@@ -263,7 +265,32 @@
     "disable": "Вимкнути",
     "deleteConfirm": "Видалити користувача?",
     "filterRoleAll": "Всі ролі",
-    "filterStatusAll": "Всі статуси"
+    "filterStatusAll": "Всі статуси",
+    "tabUsers": "Користувачі",
+    "tabAudit": "Журнал"
+  },
+  "audit": {
+    "filterEmail": "Email користувача...",
+    "filterAction": "Всі дії",
+    "filterCategory": "Всі категорії",
+    "filterStatus": "Всі статуси",
+    "categorySecurity": "Безпека",
+    "categoryActivity": "Активність",
+    "statusSuccess": "Успіх",
+    "statusFailure": "Помилка",
+    "colTimestamp": "Час",
+    "colUser": "Користувач",
+    "colAction": "Дія",
+    "colCategory": "Категорія",
+    "colStatus": "Статус",
+    "colIp": "IP",
+    "viewDetails": "Деталі",
+    "noLogs": "Записи не знайдені",
+    "detailTitle": "Запис журналу",
+    "clearActivity": "Очистити активність",
+    "clearAll": "Очистити все",
+    "clearActivityConfirm": "Видалити всі записи активності? Записи безпеки залишаться.",
+    "clearAllConfirm": "Видалити ВСІ записи включаючи записи безпеки? Це не можна скасувати."
   },
   "profile": {
     "title": "Профіль",

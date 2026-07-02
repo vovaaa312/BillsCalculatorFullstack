@@ -207,7 +207,9 @@
     "currency": "CZK",
     "records": "записей",
     "noResults": "Нет результатов",
-    "deleteConfirm": "Вы уверены, что хотите удалить этот элемент?"
+    "deleteConfirm": "Вы уверены, что хотите удалить этот элемент?",
+    "prev": "Назад",
+    "next": "Вперёд"
   },
   "auth": {
     "login": "Войти",
@@ -263,7 +265,32 @@
     "disable": "Отключить",
     "deleteConfirm": "Удалить пользователя?",
     "filterRoleAll": "Все роли",
-    "filterStatusAll": "Все статусы"
+    "filterStatusAll": "Все статусы",
+    "tabUsers": "Пользователи",
+    "tabAudit": "Журнал"
+  },
+  "audit": {
+    "filterEmail": "Email пользователя...",
+    "filterAction": "Все действия",
+    "filterCategory": "Все категории",
+    "filterStatus": "Все статусы",
+    "categorySecurity": "Безопасность",
+    "categoryActivity": "Активность",
+    "statusSuccess": "Успех",
+    "statusFailure": "Ошибка",
+    "colTimestamp": "Время",
+    "colUser": "Пользователь",
+    "colAction": "Действие",
+    "colCategory": "Категория",
+    "colStatus": "Статус",
+    "colIp": "IP",
+    "viewDetails": "Подробнее",
+    "noLogs": "Записи не найдены",
+    "detailTitle": "Запись журнала",
+    "clearActivity": "Очистить активность",
+    "clearAll": "Очистить всё",
+    "clearActivityConfirm": "Удалить все записи активности? Записи безопасности останутся.",
+    "clearAllConfirm": "Удалить ВСЕ записи включая записи безопасности? Это нельзя отменить."
   },
   "profile": {
     "title": "Профиль",

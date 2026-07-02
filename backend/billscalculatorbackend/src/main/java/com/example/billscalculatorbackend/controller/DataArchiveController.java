@@ -1,6 +1,8 @@
 package com.example.billscalculatorbackend.controller;
 
+import com.example.billscalculatorbackend.annotation.Audit;
 import com.example.billscalculatorbackend.model.DataArchive;
+import com.example.billscalculatorbackend.model.LogCategory;
 import com.example.billscalculatorbackend.service.DataArchiveService;
 import com.example.billscalculatorbackend.service.UserService;
 import org.springframework.http.MediaType;
@@ -27,6 +29,7 @@ public class DataArchiveController extends BaseController {
     }
 
     @PostMapping
+    @Audit(action = "CREATE_ARCHIVE", entityType = "ARCHIVE")
     public ResponseEntity<DataArchive> create(@RequestBody Map<String, String> body) {
         return ResponseEntity.status(201).body(archiveService.create(currentUser(), body.get("name")));
     }
@@ -54,6 +57,7 @@ public class DataArchiveController extends BaseController {
     }
 
     @DeleteMapping("/{id}")
+    @Audit(action = "DELETE_ARCHIVE", entityType = "ARCHIVE")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         archiveService.delete(currentUser(), id);
         return ResponseEntity.noContent().build();
